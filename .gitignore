@@ -1,0 +1,31 @@
+node_modules/
+.next/
+out/
+build/
+.DS_Store
+*.pem
+
+# local IDE / agent state
+.claude/
+.idea/
+.vscode/
+
+# accidental nested clone
+/HR-AGENT-V2/
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env
+.env*.local
+.env
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
