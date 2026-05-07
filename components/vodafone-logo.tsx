@@ -19,7 +19,6 @@ export function VodafoneLogo({
 }: Props) {
   const uid = useId();
   const gradId = `vf-grad-${uid}`;
-  const glassId = `vf-glass-${uid}`;
 
   return (
     <div className={cn("flex items-center gap-3", className)}>
@@ -55,13 +54,12 @@ export function VodafoneLogo({
         )}
 
         <motion.svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="-0.398 -4.59 378.918 388.633"
           width={size}
           height={size}
-          viewBox="0 0 64 64"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
           aria-label="Vodafone"
-          className="relative z-10 drop-shadow-[0_2px_10px_rgba(230,0,0,0.65)]"
+          className="relative z-10 drop-shadow-[0_2px_14px_rgba(230,0,0,0.75)]"
           animate={animated ? { scale: [1, 1.028, 1] } : undefined}
           transition={
             animated
@@ -70,45 +68,20 @@ export function VodafoneLogo({
           }
         >
           <defs>
-            {/* Main red gradient — richer depth */}
             <radialGradient id={gradId} cx="40%" cy="26%" r="82%">
               <stop offset="0%" stopColor="#FF4444" />
               <stop offset="42%" stopColor="#E60000" />
               <stop offset="100%" stopColor="#880000" />
             </radialGradient>
-            {/* Glass-dome highlight */}
-            <radialGradient id={glassId} cx="36%" cy="18%" r="58%">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.28)" />
-              <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-            </radialGradient>
           </defs>
-
-          {/* Subtle shadow base */}
-          <ellipse cx="32" cy="36" rx="26" ry="6" fill="rgba(0,0,0,0.25)" />
-
-          {/* Main circle */}
-          <circle cx="32" cy="32" r="30" fill={`url(#${gradId})`} />
-
-          {/* Glass dome highlight */}
-          <circle cx="32" cy="32" r="30" fill={`url(#${glassId})`} />
-
-          {/* Rim */}
-          <circle
-            cx="32"
-            cy="32"
-            r="29.5"
-            fill="none"
-            stroke="rgba(255,255,255,0.18)"
-            strokeWidth="0.8"
-          />
-
-          {/* Vodafone speech-mark */}
+          {/* Official Vodafone speech-mark — outer red body */}
           <path
-            d="M32 14c-9.94 0-18 7.16-18 16 0 6.43 4.42 12.08 10.62 14.32
-               -.07-.6-.12-1.2-.12-1.82 0-7.18 5.6-13.04 12.78-13.5
-               l.22-.01c.32 0 .64.01.95.04
-               C36.36 23.62 33.4 19.6 33.4 14.86
-               c0-.28.01-.56.03-.84A18.18 18.18 0 0 0 32 14Z"
+            d="m119.441 14.328c47.465-18.918 102.754-17.61 148.954 4.363-13.165-2-26.555-.492-39.586 1.711-35.391 6.684-69.024 23.336-95.313 48.075-25.207 24.777-42.871 57.652-47.86 92.824-3.3 24.922-.241 51.062 10.942 73.746 11.524 23.8 31.809 43.32 56.258 53.394 23.559 9.97 50.887 9.86 74.75.961 35.805-13.14 61.531-48.62 64.473-86.527 1.851-24.844-4.192-51.273-20.883-70.328-15.934-18.652-39.238-28.926-62.559-34.774-1.25-23 9.586-45.722 26.77-60.68 9.543-8.605 21.386-14.09 33.633-17.6l.93-.321c35.058 16.812 64.847 44.539 83.827 78.578 16.262 28.98 24.743 62.375 23.903 95.64-.16 43.016-16.239 85.606-43.801 118.497-26.063 31.367-62.516 53.93-102.246 62.965-39.836 9.191-82.695 5.226-119.977-11.704-36.48-16.293-67.386-44.617-87.047-79.457-16.355-28.953-25.007-62.336-24.289-95.64.078-41.496 14.813-82.672 40.54-115.121 20.55-25.91 47.812-46.512 78.581-58.602z"
+            fill={`url(#${gradId})`}
+          />
+          {/* Inner white fill */}
+          <path
+            d="m228.809 20.402c13.03-2.203 26.421-3.71 39.586-1.71l1.89.32-1.265.48c-12.247 3.512-24.09 8.996-33.633 17.602-17.184 14.957-28.02 37.68-26.77 60.68 23.32 5.847 46.625 16.12 62.559 34.773 16.691 19.055 22.734 45.484 20.883 70.328-2.942 37.906-28.668 73.387-64.473 86.527-23.863 8.899-51.191 9.008-74.75-.96-24.45-10.075-44.734-29.594-56.258-53.395-11.183-22.684-14.242-48.824-10.941-73.746 4.988-35.172 22.652-68.047 47.86-92.824 26.288-24.739 59.921-41.391 95.312-48.075z"
             fill="white"
           />
         </motion.svg>
