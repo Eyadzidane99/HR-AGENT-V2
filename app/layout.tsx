@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Vodafone HR Agent",
-  description: "Vodafone Egypt HR Agent — chat-powered candidate intake and search.",
+  title: "Vodafone Candidate Process Filtration",
+  description: "Vodafone Egypt Candidate Process Filtration — chat-powered candidate intake and search.",
   icons: { icon: "/favicon.ico" }
 };
 

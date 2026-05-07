@@ -29,7 +29,7 @@ export default function LoginPage() {
                 <p className="text-[11px] uppercase tracking-[0.2em] text-vodafone-red/80">
                   Vodafone Egypt
                 </p>
-                <h1 className="text-2xl font-semibold text-white">HR Agent</h1>
+                <h1 className="text-2xl font-semibold text-white">Candidate Process Filtration</h1>
               </div>
             </div>
 

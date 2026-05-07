@@ -26,7 +26,7 @@ const WELCOME: ChatMessageData = {
   id: "welcome",
   role: "agent",
   content:
-    "Welcome to **Vodafone HR Agent**. I help you capture and retrieve candidate information.\n\nYou can:\n• Type or paste candidate details.\n• **Attach a PDF CV** (paperclip icon) — I'll parse it and store the candidate.\n• Ask about a candidate by name, skill, email, phone, etc.\n\nTry: *Add candidate. Name: Sara Ahmed. Email: sara@vodafone.com. Skills: React, Node. Years: 5.*",
+    "Welcome to **Vodafone Candidate Process Filtration**. I help you capture and retrieve candidate information.\n\nYou can:\n• Type or paste candidate details.\n• **Attach a PDF CV** (paperclip icon) — I'll parse it and store the candidate.\n• Ask about a candidate by name, skill, email, phone, etc.\n\nTry: *Add candidate. Name: Sara Ahmed. Email: sara@vodafone.com. Skills: React, Node. Years: 5.*",
   createdAt: Date.now()
 };
 
@@ -283,7 +283,7 @@ export function ChatShell() {
               <VodafoneLogo size={32} />
             </div>
             <div>
-              <h1 className="text-sm font-semibold tracking-wide">HR Agent</h1>
+              <h1 className="text-sm font-semibold tracking-wide">Candidate Process Filtration</h1>
               <p className="text-[11px] text-zinc-500">
                 Powered by Azure AI • Vodafone Egypt
               </p>

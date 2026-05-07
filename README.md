@@ -1,6 +1,6 @@
-# Vodafone HR Agent
+# Vodafone Candidate Process Filtration
 
-Dark-mode, Vodafone Egypt–branded chat GUI for an HR agent that captures and retrieves candidate information. Built with Next.js 14 (App Router), TypeScript, Tailwind CSS, shadcn/ui, framer-motion, and a Spline 3D scene on the login screen.
+Dark-mode, Vodafone Egypt–branded chat GUI for a Candidate Process Filtration agent that captures and retrieves candidate information. Built with Next.js 14 (App Router), TypeScript, Tailwind CSS, shadcn/ui, framer-motion, and a Spline 3D scene on the login screen.
 
 The Azure AI Agent Service integration is intentionally **deferred** — the server already exposes a clean `/api/chat` boundary and ships with a local rule-based agent stub. Swap it for Azure when ready (one fetch call, see below).
 
