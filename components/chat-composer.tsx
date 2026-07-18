@@ -24,6 +24,7 @@ type Props = {
   onClearAttachment: () => void;
   attachment?: ComposerAttachment;
   disabled?: boolean;
+  allowAttachment?: boolean;
   placeholder?: string;
 };
 
@@ -35,6 +36,7 @@ export function ChatComposer({
   onClearAttachment,
   attachment,
   disabled,
+  allowAttachment = true,
   placeholder
 }: Props) {
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -77,7 +79,7 @@ export function ChatComposer({
 
       <div
         className={cn(
-          "group relative rounded-2xl border border-vodafone-red/20 bg-zinc-950/70 backdrop-blur-md p-3 shadow-[0_0_30px_-12px_rgba(230,0,0,0.4)]",
+          "group relative rounded-2xl border border-vodafone-red/20 bg-white/95 backdrop-blur-md p-3 shadow-[0_12px_35px_-24px_rgba(230,0,0,0.45)]",
           "focus-within:border-vodafone-red/60 focus-within:shadow-[0_0_40px_-8px_rgba(230,0,0,0.55)] transition-all"
         )}
       >
@@ -92,7 +94,7 @@ export function ChatComposer({
             >
               <div
                 className={cn(
-                  "flex items-center gap-3 rounded-xl border bg-zinc-900/60 px-3 py-2",
+                  "flex items-center gap-3 rounded-xl border bg-zinc-50 px-3 py-2",
                   attachment.status === "error"
                     ? "border-red-500/50"
                     : "border-vodafone-red/30"
@@ -106,7 +108,7 @@ export function ChatComposer({
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white truncate">{attachment.file.name}</p>
+                  <p className="text-sm text-zinc-900 truncate">{attachment.file.name}</p>
                   <p className="text-[11px] text-zinc-500 truncate">
                     {attachment.status === "extracting"
                       ? "Extracting text…"
@@ -120,7 +122,7 @@ export function ChatComposer({
                 <button
                   type="button"
                   onClick={onClearAttachment}
-                  className="shrink-0 rounded-md p-1.5 text-zinc-400 hover:bg-white/10 hover:text-white transition"
+                  className="shrink-0 rounded-md p-1.5 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900 transition"
                   aria-label="Remove attachment"
                 >
                   <X className="h-4 w-4" />
@@ -134,12 +136,12 @@ export function ChatComposer({
           <Button
             type="button"
             onClick={() => fileRef.current?.click()}
-            disabled={disabled || !!attachment}
+            disabled={disabled || !allowAttachment || !!attachment}
             size="icon"
             variant="ghost"
             className="h-10 w-10 shrink-0 text-zinc-400 hover:text-vodafone-red"
             aria-label="Attach PDF CV"
-            title="Attach PDF CV"
+            title={allowAttachment ? "Attach PDF CV" : "CV upload is not expected at this step"}
           >
             <Paperclip className="h-4 w-4" />
           </Button>
@@ -159,7 +161,7 @@ export function ChatComposer({
                 ? "Add a note about this CV (optional)…"
                 : "Add a candidate, attach a CV, or ask about one…")
             }
-            className="flex-1 resize-none bg-transparent px-1 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none max-h-44"
+            className="flex-1 resize-none bg-transparent px-1 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none max-h-44"
           />
 
           <Button

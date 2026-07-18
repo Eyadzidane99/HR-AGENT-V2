@@ -87,7 +87,7 @@ export function LoginForm() {
             id="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="Eyad_Zidane"
+            placeholder="Enter your Username"
             autoComplete="username"
             required
             className="pl-9"
@@ -104,7 +104,7 @@ export function LoginForm() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
+            placeholder="Enter your Password"
             autoComplete="current-password"
             required
             className="pl-9"

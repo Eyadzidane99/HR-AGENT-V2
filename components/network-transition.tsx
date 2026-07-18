@@ -45,7 +45,7 @@ export function NetworkTransition({ onComplete }: Props) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.35 }}
-      className="fixed inset-0 z-[200] overflow-hidden bg-black"
+      className="fixed inset-0 z-[200] overflow-hidden bg-white"
     >
       {/* Background glow + slow rotating ring (depth) */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(230,0,0,0.18),transparent_60%)]" />
@@ -140,10 +140,10 @@ export function NetworkTransition({ onComplete }: Props) {
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0 }}
-            className="absolute left-8 top-8 flex items-center gap-2 rounded-full border border-vodafone-red/30 bg-black/40 px-3 py-1.5 backdrop-blur"
+            className="absolute left-8 top-8 flex items-center gap-2 rounded-full border border-vodafone-red/30 bg-white/80 px-3 py-1.5 shadow-sm backdrop-blur"
           >
             <Lock className="h-3 w-3 text-vodafone-red" />
-            <span className="text-[11px] tracking-[0.2em] text-zinc-400">
+            <span className="text-[11px] tracking-[0.2em] text-zinc-600">
               VF-EGY • SECURE HANDSHAKE
             </span>
           </motion.div>
@@ -157,10 +157,10 @@ export function NetworkTransition({ onComplete }: Props) {
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0 }}
-            className="absolute bottom-8 right-8 flex items-center gap-2 rounded-full border border-vodafone-red/30 bg-black/40 px-3 py-1.5 backdrop-blur"
+            className="absolute bottom-8 right-8 flex items-center gap-2 rounded-full border border-vodafone-red/30 bg-white/80 px-3 py-1.5 shadow-sm backdrop-blur"
           >
             <ShieldCheck className="h-3 w-3 text-vodafone-red" />
-            <span className="text-[11px] tracking-[0.2em] text-zinc-400">
+            <span className="text-[11px] tracking-[0.2em] text-zinc-600">
               SESSION ESTABLISHED
             </span>
           </motion.div>
@@ -174,7 +174,7 @@ export function NetworkTransition({ onComplete }: Props) {
         transition={{ delay: 0.35, duration: 0.4 }}
         className="absolute bottom-[14%] left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-3 text-center"
       >
-        <div className="flex h-6 items-center gap-2 text-sm tracking-wide text-zinc-300">
+        <div className="flex h-6 items-center gap-2 text-sm tracking-wide text-zinc-700">
           <AnimatePresence mode="wait">
             {!showConnected ? (
               <motion.span
@@ -194,7 +194,7 @@ export function NetworkTransition({ onComplete }: Props) {
                 initial={{ opacity: 0, scale: 0.85 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ type: "spring", stiffness: 260, damping: 16 }}
-                className="flex items-center gap-2.5 text-white"
+                className="flex items-center gap-2.5 text-zinc-900"
               >
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-vodafone-red shadow-[0_0_14px_rgba(230,0,0,0.85)]">
                   <Check className="h-3 w-3 text-white" strokeWidth={3} />
@@ -204,7 +204,7 @@ export function NetworkTransition({ onComplete }: Props) {
             )}
           </AnimatePresence>
         </div>
-        <p className="text-[10px] uppercase tracking-[0.32em] text-zinc-600">
+        <p className="text-[10px] uppercase tracking-[0.32em] text-zinc-500">
           Vodafone Egypt • Secure Channel
         </p>
       </motion.div>

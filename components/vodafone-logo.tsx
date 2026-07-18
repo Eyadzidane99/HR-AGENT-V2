@@ -89,7 +89,7 @@ export function VodafoneLogo({
 
       {withWordmark && (
         <motion.span
-          className="text-white font-semibold tracking-wide text-lg select-none"
+          className="text-zinc-900 font-semibold tracking-wide text-lg select-none"
           initial={animated ? { opacity: 0, x: -8 } : undefined}
           animate={animated ? { opacity: 1, x: 0 } : undefined}
           transition={

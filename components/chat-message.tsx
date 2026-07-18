@@ -19,6 +19,7 @@ export type ChatMessageData = {
   content: string;
   createdAt: number;
   attachment?: ChatAttachmentMeta;
+  actions?: { label: string; value: string }[];
 };
 
 function renderContent(content: string) {
@@ -27,7 +28,7 @@ function renderContent(content: string) {
     const parts = line.split(/(\*\*[^*]+\*\*)/g).map((seg, j) => {
       if (seg.startsWith("**") && seg.endsWith("**")) {
         return (
-          <strong key={j} className="text-white">
+          <strong key={j} className="font-semibold">
             {seg.slice(2, -2)}
           </strong>
         );
@@ -54,7 +55,7 @@ function AttachmentChip({ a, isUser }: { a: ChatAttachmentMeta; isUser: boolean 
     <div
       className={cn(
         "mb-2 flex items-center gap-2 rounded-lg px-2.5 py-2",
-        isUser ? "bg-white/10 border border-white/20" : "bg-vodafone-red/10 border border-vodafone-red/30"
+        isUser ? "bg-white/15 border border-white/25" : "bg-vodafone-red/10 border border-vodafone-red/30"
       )}
     >
       <div
@@ -67,7 +68,7 @@ function AttachmentChip({ a, isUser }: { a: ChatAttachmentMeta; isUser: boolean 
       </div>
       <div className="min-w-0">
         <p className="text-xs font-medium truncate">{a.name}</p>
-        <p className={cn("text-[10px] truncate", isUser ? "text-white/70" : "text-zinc-400")}>
+        <p className={cn("text-[10px] truncate", isUser ? "text-white/80" : "text-zinc-500")}>
           PDF CV
           {a.pages ? ` • ${a.pages} page${a.pages === 1 ? "" : "s"}` : ""}
           {a.size ? ` • ${formatSize(a.size)}` : ""}
@@ -77,7 +78,15 @@ function AttachmentChip({ a, isUser }: { a: ChatAttachmentMeta; isUser: boolean 
   );
 }
 
-export function ChatMessage({ message }: { message: ChatMessageData }) {
+export function ChatMessage({
+  message,
+  onAction,
+  actionsDisabled
+}: {
+  message: ChatMessageData;
+  onAction?: (value: string) => void;
+  actionsDisabled?: boolean;
+}) {
   const isUser = message.role === "user";
   return (
     <motion.div
@@ -94,19 +103,34 @@ export function ChatMessage({ message }: { message: ChatMessageData }) {
 
       <div
         className={cn(
-          "max-w-[78%] rounded-2xl px-4 py-3 text-sm text-zinc-100 shadow-sm",
+          "max-w-[78%] rounded-2xl px-4 py-3 text-sm shadow-sm",
           isUser
             ? "rounded-tr-sm bg-vodafone-red/90 text-white"
-            : "rounded-tl-sm bg-zinc-900/80 border border-vodafone-red/15 backdrop-blur"
+            : "rounded-tl-sm bg-white border border-zinc-200 text-zinc-800 backdrop-blur shadow-[0_8px_24px_-18px_rgba(0,0,0,0.35)]"
         )}
       >
         {message.attachment ? <AttachmentChip a={message.attachment} isUser={isUser} /> : null}
         {message.content ? <div className="space-y-1">{renderContent(message.content)}</div> : null}
+        {!isUser && message.actions?.length ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {message.actions.map((action) => (
+              <button
+                key={`${action.label}-${action.value}`}
+                type="button"
+                disabled={actionsDisabled}
+                onClick={() => onAction?.(action.value)}
+                className="rounded-lg border border-vodafone-red/40 bg-vodafone-red/10 px-3 py-1.5 text-xs text-zinc-900 transition hover:border-vodafone-red hover:bg-vodafone-red/20 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       {isUser ? (
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-800 ring-1 ring-white/10">
-          <User className="h-4 w-4 text-zinc-200" />
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 ring-1 ring-zinc-200">
+          <User className="h-4 w-4 text-zinc-700" />
         </div>
       ) : null}
     </motion.div>
@@ -123,7 +147,7 @@ export function TypingIndicator() {
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-vodafone-red to-vodafone-deep">
         <Bot className="h-4 w-4 text-white" />
       </div>
-      <div className="rounded-2xl rounded-tl-sm bg-zinc-900/80 border border-vodafone-red/15 px-4 py-3">
+      <div className="rounded-2xl rounded-tl-sm bg-white border border-zinc-200 px-4 py-3 shadow-sm">
         <div className="flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-vodafone-red animate-bounce-dot [animation-delay:-0.32s]" />
           <span className="h-2 w-2 rounded-full bg-vodafone-red animate-bounce-dot [animation-delay:-0.16s]" />

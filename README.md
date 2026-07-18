@@ -1,8 +1,6 @@
 # Vodafone Candidate Process Filtration
 
-Dark-mode, Vodafone Egypt–branded chat GUI for a Candidate Process Filtration agent that captures and retrieves candidate information. Built with Next.js 14 (App Router), TypeScript, Tailwind CSS, shadcn/ui, framer-motion, and a Spline 3D scene on the login screen.
-
-The Azure AI Agent Service integration is intentionally **deferred** — the server already exposes a clean `/api/chat` boundary and ships with a local rule-based agent stub. Swap it for Azure when ready (one fetch call, see below).
+Dark-mode, Vodafone Egypt–branded guided Candidate Assessment chat. The conversation is a deterministic local simulation: no AI service or backend database is required. Built with Next.js 14 (App Router), TypeScript, Tailwind CSS, shadcn/ui, framer-motion, and a Spline 3D scene on the login screen.
 
 ---
 
@@ -11,10 +9,10 @@ The Azure AI Agent Service integration is intentionally **deferred** — the ser
 - Login gate (single hardcoded user — `Eyad_Zidane` / `Test123456`) with HttpOnly signed cookie.
 - Dark UI with Vodafone red (`#E60000`) accents, animated gradient orbs, Spotlight effect, 3D Spline scene.
 - Funcky animations everywhere — message stagger, typing indicator, glowing send button, drifting grid.
-- Candidate intake from natural-language messages (heuristic field extraction: name, email, phone, role, skills, years, location).
-- **PDF CV upload** — attach a CV via the paperclip button; text is extracted client-side with `pdfjs-dist` and forwarded to the agent for analysis.
-- Retrieval by any field — name, email, phone digits, skill, role, etc.
-- Persistent client-side store (localStorage) — survives reloads, syncs the sidebar live.
+- Guided Add, Search, and Update flows with quick replies and typed-input equivalents.
+- Required **PDF CV upload** for new candidates, stored locally with the assessment record (5 MB maximum).
+- Nineteen QA technical criteria with 1–5 ratings, optional comments, and automatic pass/fail scoring.
+- Persistent client-side records and resumable chat state in localStorage.
 - Sidebar of recent candidates, click to pre-fill a search.
 
 ---
@@ -38,26 +36,9 @@ You'll land on `/chat`.
 
 ### Try it
 
-Add a candidate:
-```
-Add candidate. Name: Sara Ahmed. Email: sara@vodafone.com. Phone: 0100-555-0123. Role: Frontend Engineer. Skills: React, Node, TypeScript. Years: 5. Location: Cairo.
-```
+Choose Add, Search, or Update from the opening menu and follow the prompts. Fixed choices can be entered with the displayed number or selected using a quick-reply button. Type `menu` or `cancel` to leave a flow.
 
-Or click the paperclip and attach a PDF CV — the agent will parse and store it.
-
-Search:
-```
-find sara
-who knows React?
-0100
-```
-
-List everything:
-```
-list candidates
-```
-
-> **PDF support:** Text-layer PDFs only (most modern CVs). Scanned image-only PDFs need OCR — Azure's Document Intelligence is a good follow-up if you need that.
+> **PDF support:** Text-layer PDFs only (most modern CVs). Full PDF data is saved in localStorage, so available capacity depends on the browser. Scanned image-only PDFs need OCR.
 
 ---
 
@@ -77,51 +58,7 @@ npm start
 3. Framework auto-detects as Next.js. No environment variables required for the stub.
 4. Click **Deploy**. Done — you'll get a live URL in ~60s.
 
-When you wire Azure (next section), add `AZURE_AI_ENDPOINT`, `AZURE_AI_KEY`, `AZURE_AI_AGENT_ID`, and a long random `AUTH_SECRET` to the project's Environment Variables in Vercel.
-
----
-
-## Wiring the Azure AI Agent Service
-
-Open [`app/api/chat/route.ts`](app/api/chat/route.ts). Replace the `runAgent(...)` call with your Azure call. A complete example is in the file's TODO block — copy/paste and fill the env vars in `.env.local`:
-
-```
-AUTH_SECRET=<long random string>
-AZURE_AI_ENDPOINT=https://<your-resource>.services.ai.azure.com
-AZURE_AI_KEY=<your key>
-AZURE_AI_AGENT_ID=<your agent id>
-```
-
-The contract the UI expects:
-
-```ts
-POST /api/chat
-body: {
-  message: string,
-  history: {role, content}[],
-  candidates: Candidate[],
-  attachment?: {                // present when a PDF CV was attached
-    name: string,
-    mimeType: string,           // "application/pdf"
-    size?: number,
-    pages?: number,
-    text: string                // already-extracted text from the PDF
-  }
-}
-res:  { reply: string, candidate?: Candidate, matches?: Candidate[] }
-```
-
-If the response includes a `candidate`, the chat shell stores it in localStorage so the sidebar updates immediately.
-
-### Azure with file upload (alternative)
-
-If you want Azure to receive the actual PDF binary (e.g. to use Azure AI Search / File Search tooling) instead of the pre-extracted text, switch the API route from JSON to `multipart/form-data`:
-
-1. In `components/chat-shell.tsx`, build a `FormData` with `file` + the JSON message body, and post to `/api/chat`.
-2. In `app/api/chat/route.ts`, read it via `await req.formData()`.
-3. Forward the file to Azure's file upload endpoint, then call the agent run with the returned `file_id`.
-
-For most demo purposes the inline-text path (already wired) is faster and cheaper.
+Set a long random `AUTH_SECRET` in production so authentication cookies do not use the development fallback.
 
 ---
 
@@ -136,7 +73,6 @@ app/
   chat/layout.tsx         # auth-guarded
   chat/page.tsx           # mounts <ChatShell />
   api/auth/route.ts       # POST login / logout, sets cookie
-  api/chat/route.ts       # POST chat → agent (stub today, Azure tomorrow)
 components/
   ui/{splite,spotlight,card,button,input,label}.tsx
   vodafone-logo.tsx       # inline SVG logo
@@ -146,11 +82,10 @@ components/
   chat-message.tsx        # bubble + typing indicator
   chat-composer.tsx       # auto-growing textarea + send
 lib/
-  utils.ts                # cn()
-  auth.ts                 # constant-time creds, HMAC-signed cookie token
-  candidates.ts           # localStorage CRUD
-  agent.ts                # parseCandidate + runAgent (rule-based stub)
-  pdf.ts                  # client-side PDF text extraction (pdfjs-dist)
+  assessment-workflow.ts  # scripted state machine and questionnaire
+  candidates.ts           # versioned localStorage records and migration
+  auth.ts                 # constant-time credentials and signed cookie
+  pdf.ts                  # client-side PDF validation and text extraction
 ```
 
 ---

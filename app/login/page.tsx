@@ -17,7 +17,7 @@ export default function LoginPage() {
     <main className="relative min-h-[100dvh] w-full flex items-center justify-center p-4 sm:p-8">
       <AnimatedBackground />
 
-      <Card className="w-full max-w-5xl h-[600px] bg-black/[0.85] border-vodafone-red/20 relative overflow-hidden shadow-[0_0_60px_-20px_rgba(230,0,0,0.5)]">
+      <Card className="w-full max-w-5xl h-[600px] bg-white/95 border-vodafone-red/20 relative overflow-hidden shadow-[0_20px_70px_-30px_rgba(230,0,0,0.35)]">
         <Spotlight className="-top-40 left-0 md:left-60 md:-top-20" fill="#E60000" />
 
         <div className="flex h-full flex-col md:flex-row">
@@ -29,14 +29,14 @@ export default function LoginPage() {
                 <p className="text-[11px] uppercase tracking-[0.2em] text-vodafone-red/80">
                   Vodafone Egypt
                 </p>
-                <h1 className="text-2xl font-semibold text-white">Candidate Process Filtration</h1>
+                <h1 className="text-2xl font-semibold text-zinc-900">Candidate Process Filtration</h1>
               </div>
             </div>
 
-            <h2 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/50 mb-2">
+            <h2 className="text-3xl md:text-4xl font-bold text-zinc-900 mb-2">
               Welcome back.
             </h2>
-            <p className="text-zinc-400 mb-8 max-w-sm">
+            <p className="text-zinc-600 mb-8 max-w-sm">
               Sign in to manage candidate intake and search through your talent pipeline.
             </p>
 
