@@ -10,7 +10,6 @@ Dark-mode, Vodafone Egypt–branded guided Candidate Assessment chat. The conver
 - Dark UI with Vodafone red (`#E60000`) accents, animated gradient orbs, Spotlight effect, 3D Spline scene.
 - Funcky animations everywhere — message stagger, typing indicator, glowing send button, drifting grid.
 - Guided Add, Search, and Update flows with quick replies and typed-input equivalents.
-- Required **PDF CV upload** for new candidates, stored locally with the assessment record (5 MB maximum).
 - Nineteen QA technical criteria with 1–5 ratings, optional comments, and automatic pass/fail scoring.
 - Persistent client-side records and resumable chat state in localStorage.
 - Sidebar of recent candidates, click to pre-fill a search.
@@ -38,8 +37,6 @@ You'll land on `/chat`.
 
 Choose Add, Search, or Update from the opening menu and follow the prompts. Fixed choices can be entered with the displayed number or selected using a quick-reply button. Type `menu` or `cancel` to leave a flow.
 
-> **PDF support:** Text-layer PDFs only (most modern CVs). Full PDF data is saved in localStorage, so available capacity depends on the browser. Scanned image-only PDFs need OCR.
-
 ---
 
 ## Production build
@@ -48,6 +45,29 @@ Choose Add, Search, or Update from the opening menu and follow the prompts. Fixe
 npm run build
 npm start
 ```
+
+## Desktop executable
+
+The project can be packaged as an installable desktop executable. When the installed app starts, it launches the production Next.js server locally and opens the chat in the default browser.
+
+Build a Windows installer with:
+
+```bash
+npm install
+npm run desktop:build
+```
+
+The installer is written to `dist/`. Run the Windows command on Windows (or a Windows CI runner) for the most reliable Windows installer output. macOS and Linux builds are available with `npm run desktop:build:mac` and `npm run desktop:build:linux`.
+
+To create one portable Windows executable that runs without npm, Node.js, or installation, use:
+
+```bash
+npm run desktop:portable
+```
+
+Copy the generated `Vodafone HR Agent Portable.exe` from `dist/` to another Windows device and double-click it. npm and Node.js are required only on the computer that creates the executable.
+
+Each device runs its own local copy, so candidate records remain in that device's browser localStorage. Sharing records between devices requires a hosted server and shared database instead of localStorage.
 
 ---
 
@@ -85,7 +105,6 @@ lib/
   assessment-workflow.ts  # scripted state machine and questionnaire
   candidates.ts           # versioned localStorage records and migration
   auth.ts                 # constant-time credentials and signed cookie
-  pdf.ts                  # client-side PDF validation and text extraction
 ```
 
 ---

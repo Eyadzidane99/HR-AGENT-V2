@@ -5,34 +5,22 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { LogOut, Plus, Trash2, Users } from "lucide-react";
 
-import { ChatComposer, type ComposerAttachment } from "@/components/chat-composer";
+import { ChatComposer } from "@/components/chat-composer";
 import { ChatMessage, TypingIndicator } from "@/components/chat-message";
 import { VodafoneLogo } from "@/components/vodafone-logo";
 import { Button } from "@/components/ui/button";
 import { Spotlight } from "@/components/ui/spotlight";
 import {
   WorkflowSession,
+  cancelFlow,
   createSession,
-  expectedAttachment,
-  handleCv,
   handleText,
   loadSession,
+  reenterPreviousStep,
   saveSession,
   userMessage
 } from "@/lib/assessment-workflow";
-import { Candidate, StoredCv, clearAll, getCandidate, listCandidates } from "@/lib/candidates";
-import { extractPdfText } from "@/lib/pdf";
-
-const MAX_PDF_BYTES = 5 * 1024 * 1024;
-
-function readAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error("Failed to read the PDF"));
-    reader.readAsDataURL(file);
-  });
-}
+import { Candidate, clearAll, listCandidates } from "@/lib/candidates";
 
 export function ChatShell() {
   const router = useRouter();
@@ -41,8 +29,6 @@ export function ChatShell() {
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [attachment, setAttachment] = useState<ComposerAttachment>();
-  const [storedCv, setStoredCv] = useState<StoredCv>();
   const scrollerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -59,7 +45,7 @@ export function ChatShell() {
     try {
       saveSession(session);
     } catch {
-      // Candidate data is still persisted; a quota warning is shown during upload.
+      // Candidate data is persisted independently from the chat session.
     }
   }, [hydrated, session]);
 
@@ -68,80 +54,41 @@ export function ChatShell() {
     if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [session.messages, thinking]);
 
-  async function handleAttach(file: File) {
-    if (!expectedAttachment(session)) return;
-    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-      setAttachment({ file, status: "error", error: "Only PDF files are supported" });
-      return;
-    }
-    if (file.size > MAX_PDF_BYTES) {
-      setAttachment({ file, status: "error", error: "File too large (max 5 MB)" });
-      return;
-    }
-    setAttachment({ file, status: "extracting" });
-    setStoredCv(undefined);
-    try {
-      const [{ text, pages, charCount }, dataUrl] = await Promise.all([
-        extractPdfText(file),
-        readAsDataUrl(file)
-      ]);
-      if (!text) throw new Error("Couldn't extract text. Is this a scanned PDF?");
-      setStoredCv({
-        name: file.name,
-        mimeType: file.type || "application/pdf",
-        size: file.size,
-        pages,
-        dataUrl,
-        uploadedAt: Date.now()
-      });
-      setAttachment({ file, status: "ready", pages, charCount });
-    } catch (error) {
-      setAttachment({
-        file,
-        status: "error",
-        error: error instanceof Error ? error.message : "Failed to read PDF"
-      });
-    }
-  }
-
-  function clearAttachment() {
-    setAttachment(undefined);
-    setStoredCv(undefined);
-  }
-
   function submit(value?: string) {
     const text = (value ?? input).trim();
-    const hasCv = attachment?.status === "ready" && storedCv;
-    if ((!text && !hasCv) || thinking) return;
+    if (!text || thinking) return;
 
-    const visibleUser = hasCv
-      ? {
-          ...userMessage(text || `Uploaded ${storedCv.name}`),
-          attachment: { name: storedCv.name, size: storedCv.size, pages: storedCv.pages }
-        }
-      : userMessage(text);
-    const base = { ...session, messages: [...session.messages, visibleUser] };
+    const checkpoint = {
+      version: session.version,
+      step: session.step,
+      messages: session.messages,
+      candidateId: session.candidateId,
+      questionIndex: session.questionIndex,
+      pendingRating: session.pendingRating,
+      assessmentReturn: session.assessmentReturn,
+      singleCriterion: session.singleCriterion,
+      updateField: session.updateField,
+      previousStep: session.previousStep
+    };
+    const base = {
+      ...session,
+      messages: [...session.messages, userMessage(text)],
+      history: [...(session.history || []), checkpoint]
+    };
     setSession(base);
     setInput("");
     setThinking(true);
 
     window.setTimeout(() => {
       try {
-        const next = hasCv ? handleCv(base, storedCv) : handleText(base, text);
+        const next = handleText(base, text);
         setSession(next);
-        clearAttachment();
       } catch (error) {
-        const isQuota =
-          error instanceof DOMException &&
-          (error.name === "QuotaExceededError" || error.name === "NS_ERROR_DOM_QUOTA_REACHED");
-        const content = isQuota
-          ? "This PDF does not fit in local browser storage. Existing records are safe; please upload a smaller PDF."
-          : "I couldn't save that response. Existing records are safe; please try again.";
         setSession({
           ...base,
           messages: [
             ...base.messages,
-            { id: crypto.randomUUID(), role: "agent", content, createdAt: Date.now() }
+            { id: crypto.randomUUID(), role: "agent", content: "I couldn't save that response. Existing records are safe; please try again.", createdAt: Date.now() }
           ]
         });
       } finally {
@@ -151,15 +98,16 @@ export function ChatShell() {
   }
 
   function handleAction(value: string) {
-    if (value.startsWith("download_cv:")) {
-      const candidate = getCandidate(value.slice("download_cv:".length));
-      if (!candidate?.cv?.dataUrl) return;
-      const link = document.createElement("a");
-      link.href = candidate.cv.dataUrl;
-      link.download = candidate.cv.name || `${candidate.candidateName}-CV.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+    if (value === "workflow:exit") {
+      setSession(cancelFlow(session));
+      setInput("");
+      setThinking(false);
+      return;
+    }
+    if (value === "workflow:back") {
+      setSession(reenterPreviousStep(session));
+      setInput("");
+      setThinking(false);
       return;
     }
     submit(value);
@@ -182,7 +130,6 @@ export function ChatShell() {
     }
     setSession(createSession());
     setInput("");
-    clearAttachment();
     setThinking(false);
   }
 
@@ -221,7 +168,7 @@ export function ChatShell() {
             >
               <div className="text-sm font-medium text-zinc-900 truncate">{candidate.candidateName}</div>
               <div className="text-xs text-zinc-500 truncate">
-                {[candidate.titleInterviewedFor, candidate.finalDecision].filter(Boolean).join(" • ")}
+                {[candidate.phoneNumber, candidate.titleInterviewedFor, candidate.finalDecision].filter(Boolean).join(" • ")}
               </div>
             </button>
           ))}
@@ -249,13 +196,39 @@ export function ChatShell() {
           <Button onClick={handleLogout} variant="ghost" size="sm" className="md:hidden text-zinc-400" aria-label="Sign out"><LogOut className="h-4 w-4" /></Button>
         </header>
 
+        {session.step !== "main" ? (
+          <div className="relative z-10 flex flex-wrap items-center gap-2 border-b border-vodafone-red/10 bg-white/80 px-4 py-2.5 backdrop-blur sm:px-8">
+            <span className="mr-1 text-xs text-zinc-500">Flow controls:</span>
+            <Button
+              onClick={() => handleAction("workflow:back")}
+              disabled={thinking}
+              variant="outline"
+              size="sm"
+            >
+              Re-enter previous answer
+            </Button>
+            <Button
+              onClick={() => handleAction("workflow:exit")}
+              disabled={thinking}
+              variant="outline"
+              size="sm"
+              className="text-vodafone-accent hover:text-vodafone-accent"
+            >
+              Exit current candidate flow
+            </Button>
+          </div>
+        ) : null}
+
         <div ref={scrollerRef} className="relative z-10 flex-1 overflow-y-auto px-4 sm:px-8 py-6">
           <div className="mx-auto max-w-3xl space-y-5">
-            <AnimatePresence initial={false}>
-              {session.messages.map((message) => (
-                <ChatMessage
-                  key={message.id}
-                  message={message}
+              <AnimatePresence initial={false}>
+                {session.messages.map((message) => (
+                  <ChatMessage
+                    key={message.id}
+                    message={{
+                      ...message,
+                      actions: message.actions
+                    }}
                   onAction={handleAction}
                   actionsDisabled={thinking || message.id !== lastMessageId}
                 />
@@ -271,12 +244,7 @@ export function ChatShell() {
               value={input}
               onChange={setInput}
               onSubmit={() => submit()}
-              onAttach={handleAttach}
-              onClearAttachment={clearAttachment}
-              attachment={attachment}
               disabled={thinking}
-              allowAttachment={expectedAttachment(session)}
-              placeholder={expectedAttachment(session) ? "Upload a PDF CV to continue…" : "Type your answer…"}
             />
           </div>
         </div>

@@ -3,15 +3,6 @@
 export type InterviewStatus = "done" | "scheduled" | "notScheduled";
 export type FinalDecision = "Passed" | "Failed";
 
-export type StoredCv = {
-  name: string;
-  mimeType: string;
-  size: number;
-  pages?: number;
-  dataUrl: string;
-  uploadedAt: number;
-};
-
 export type TechnicalAnswer = {
   criterionId: string;
   criteria: string;
@@ -23,12 +14,12 @@ export type TechnicalAnswer = {
 export type Candidate = {
   id: string;
   candidateName: string;
+  phoneNumber: string;
   interviewDate: string;
   titleInterviewedFor: string;
   interviewerName: string;
   interviewerFeedback: string;
   interviewStatus: InterviewStatus;
-  cv?: StoredCv;
   technicalAssessment: TechnicalAnswer[];
   totalScore?: number;
   finalScore?: number;
@@ -66,6 +57,7 @@ function migrateLegacy(): Candidate[] {
       return {
         id: candidate.id || crypto.randomUUID(),
         candidateName: candidate.name || "Unnamed legacy candidate",
+        phoneNumber: "",
         interviewDate: "",
         titleInterviewedFor: candidate.role || "",
         interviewerName: "",
@@ -91,7 +83,12 @@ function readAll(): Candidate[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw) as Candidate[];
+    if (raw) {
+      return (JSON.parse(raw) as Array<Candidate & { cv?: unknown }>).map((candidate) => {
+        const { cv: _removedCv, ...withoutCv } = candidate;
+        return withoutCv;
+      });
+    }
     return migrateLegacy();
   } catch {
     return [];
@@ -131,7 +128,8 @@ export function findCandidates(query: string): Candidate[] {
   const q = query.trim().toLocaleLowerCase();
   if (!q) return [];
   return listCandidates().filter((candidate) =>
-    candidate.candidateName.toLocaleLowerCase().includes(q)
+    candidate.candidateName.toLocaleLowerCase().includes(q) ||
+    (candidate.phoneNumber || "").toLocaleLowerCase().includes(q)
   );
 }
 
