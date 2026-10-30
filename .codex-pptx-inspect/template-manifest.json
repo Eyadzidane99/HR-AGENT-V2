@@ -1,0 +1,94 @@
+{
+  "sourcePptx": "/Users/aaa/Desktop/files/TESTING/HR AGENT V2/HR_Agent_Project_Introduction.pptx",
+  "workspace": "/Users/aaa/Desktop/files/TESTING/HR AGENT V2",
+  "outDir": "/Users/aaa/Desktop/files/TESTING/HR AGENT V2/.codex-pptx-inspect",
+  "generatedAt": "2026-10-30T12:02:46.291Z",
+  "slideCount": 1,
+  "slideArtifacts": [
+    {
+      "slide": 1,
+      "previewPath": "/Users/aaa/Desktop/files/TESTING/HR AGENT V2/.codex-pptx-inspect/source-slides/source-slide-01.png",
+      "previewRelativePath": ".codex-pptx-inspect/source-slides/source-slide-01.png",
+      "layoutPath": "/Users/aaa/Desktop/files/TESTING/HR AGENT V2/.codex-pptx-inspect/layouts/source-slide-01.layout.json",
+      "layoutRelativePath": ".codex-pptx-inspect/layouts/source-slide-01.layout.json"
+    }
+  ],
+  "inspectPath": "/Users/aaa/Desktop/files/TESTING/HR AGENT V2/.codex-pptx-inspect/template-inspect.ndjson",
+  "inspectRelativePath": ".codex-pptx-inspect/template-inspect.ndjson",
+  "inspectTruncated": false,
+  "inspectMetadata": {
+    "target": {
+      "id": "pr/bia70y"
+    },
+    "omittedRecords": 0,
+    "abbreviatedRecords": 0,
+    "notices": []
+  },
+  "extractedMedia": [
+    {
+      "entry": "ppt/media/",
+      "path": "/Users/aaa/Desktop/files/TESTING/HR AGENT V2/.codex-pptx-inspect/assets/ppt/media/media",
+      "relativePath": ".codex-pptx-inspect/assets/ppt/media/media",
+      "bytes": 0
+    }
+  ],
+  "fonts": [
+    "+mj-cs",
+    "+mj-ea",
+    "+mj-lt",
+    "+mn-cs",
+    "+mn-ea",
+    "+mn-lt",
+    "Angsana New",
+    "Aptos",
+    "Aptos Display",
+    "Arial",
+    "Cordia New",
+    "DaunPenh",
+    "DokChampa",
+    "Ebrima",
+    "Estrangelo Edessa",
+    "Euphemia",
+    "Gautami",
+    "Iskoola Pota",
+    "Javanese Text",
+    "Kalinga",
+    "Kartika",
+    "Latha",
+    "Leelawadee UI",
+    "MV Boli",
+    "Mangal",
+    "Microsoft Himalaya",
+    "Microsoft JhengHei",
+    "Microsoft New Tai Lue",
+    "Microsoft Tai Le",
+    "Microsoft Uighur",
+    "Microsoft Yi Baiti",
+    "Mongolian Baiti",
+    "MoolBoran",
+    "Myanmar Text",
+    "Nirmala UI",
+    "Nyala",
+    "Phagspa",
+    "Plantagenet Cherokee",
+    "Raavi",
+    "Segoe UI",
+    "Shruti",
+    "Sylfaen",
+    "Times New Roman",
+    "Tunga",
+    "Vrinda",
+    "新細明體",
+    "游ゴシック",
+    "游ゴシック Light",
+    "等线",
+    "等线 Light",
+    "맑은 고딕"
+  ],
+  "packageParts": {
+    "mediaCount": 1,
+    "slideXmlCount": 1,
+    "chartCount": 0,
+    "tableSlideCount": 0
+  }
+}
