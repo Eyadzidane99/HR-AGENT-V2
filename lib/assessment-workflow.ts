@@ -25,6 +25,7 @@ export type WorkflowCheckpoint = {
   step: WorkflowStep;
   messages: WorkflowMessage[];
   candidateId?: string;
+  duplicateCandidateId?: string;
   questionIndex?: number;
   pendingRating?: number;
   assessmentReturn?: "add" | "search" | "update";
@@ -37,10 +38,11 @@ export type WorkflowStep =
   | "main"
   | "add_name"
   | "add_phone"
+  | "add_phone_duplicate"
   | "add_date"
   | "add_title"
   | "add_interviewer"
-  | "add_feedback"
+  | "add_review"
   | "assessment_rating"
   | "assessment_comment"
   | "search_name"
@@ -63,6 +65,7 @@ export type WorkflowSession = {
   step: WorkflowStep;
   messages: WorkflowMessage[];
   candidateId?: string;
+  duplicateCandidateId?: string;
   questionIndex?: number;
   pendingRating?: number;
   assessmentReturn?: "add" | "search" | "update";
@@ -74,7 +77,6 @@ export type WorkflowSession = {
     | "interviewDate"
     | "titleInterviewedFor"
     | "interviewerName"
-    | "interviewerFeedback"
   >;
   previousStep?: WorkflowStep;
   history?: WorkflowCheckpoint[];
@@ -111,6 +113,14 @@ const MAIN_ACTIONS: QuickAction[] = [
 const YES_NO: QuickAction[] = [
   { label: "Yes", value: "yes" },
   { label: "No", value: "no" }
+];
+const EXIT_ACTIONS: QuickAction[] = [
+  { label: "Save as draft and exit", value: "exit:save" },
+  { label: "Discard and exit", value: "exit:discard" },
+  { label: "Continue editing", value: "exit:continue" }
+];
+const DUPLICATE_PHONE_ACTIONS: QuickAction[] = [
+  { label: "Open existing profile", value: "duplicate:open" }
 ];
 const STATUS_ACTIONS: QuickAction[] = [
   { label: "1 · Done", value: "1" },
@@ -155,10 +165,11 @@ export function loadSession(): WorkflowSession {
     const candidateSteps: WorkflowStep[] = [
       "add_name",
       "add_phone",
+      "add_phone_duplicate",
       "add_date",
       "add_title",
       "add_interviewer",
-      "add_feedback",
+      "add_review",
       "assessment_rating",
       "assessment_comment",
       "search_status",
@@ -197,6 +208,42 @@ export function cancelFlow(session: WorkflowSession) {
   return returnMain(session, "The current candidate flow was cancelled.");
 }
 
+function hasCandidateData(candidate: Candidate) {
+  return Boolean(
+    candidate.candidateName ||
+      candidate.phoneNumber ||
+      candidate.interviewDate ||
+      candidate.titleInterviewedFor ||
+      candidate.interviewerName
+  );
+}
+
+export function exitFlow(session: WorkflowSession, choice: "save" | "discard" | "close") {
+  const candidate = getCandidate(session.candidateId);
+  if (choice === "save" && candidate) {
+    updateCandidate(candidate.id, { isDraft: true, legacy: false });
+    return returnMain(session, "Candidate saved as a draft. You can resume it from the Drafts section.");
+  }
+  if (choice === "discard" && candidate?.isDraft) {
+    removeCandidate(candidate.id);
+    return returnMain(session, "The unfinished candidate was discarded.");
+  }
+  return returnMain(session, "The current flow was closed.");
+}
+
+export function requestExit(session: WorkflowSession) {
+  const candidate = getCandidate(session.candidateId);
+  if (!candidate?.isDraft) return returnMain(session, "The current flow was closed.");
+  if (!hasCandidateData(candidate)) {
+    return exitFlow(session, "discard");
+  }
+  return withAgent(
+    { ...session, previousStep: session.step, step: "cancel_confirm" },
+    "You have entered candidate data. What would you like to do?",
+    EXIT_ACTIONS
+  );
+}
+
 export function reenterPreviousStep(session: WorkflowSession) {
   const history = session.history || [];
   const previous = history.at(-1);
@@ -220,8 +267,12 @@ function isEgyptianMobile(value: string) {
   return /^01[0125]\d{8}$/.test(value.trim());
 }
 
+function isValidCandidateName(value: string) {
+  return value.trim().split(/\s+/).length >= 2;
+}
+
 function invalidMobileMessage(value: string) {
-  return `mobile number ${value} mesh Sah, Garab tani keda`;
+  return `mobile number ${value} mesh Sah, Garab tani keda. Example: 01012345678`;
 }
 
 function isChoice(value: string, number: string, words: string[]) {
@@ -279,10 +330,84 @@ function basicSummary(candidate: Candidate) {
   ].join("\n");
 }
 
+export type ReviewField =
+  | "candidateName"
+  | "phoneNumber"
+  | "titleInterviewedFor"
+  | "interviewerName"
+  | "interviewDate";
+
+const REVIEW_FIELD_STEPS: Record<ReviewField, Extract<WorkflowStep, `add_${string}`>> = {
+  candidateName: "add_name",
+  phoneNumber: "add_phone",
+  titleInterviewedFor: "add_title",
+  interviewerName: "add_interviewer",
+  interviewDate: "add_date"
+};
+
+const STEP_REVIEW_FIELDS: Partial<Record<Extract<WorkflowStep, `add_${string}`>, ReviewField>> = {
+  add_name: "candidateName",
+  add_phone: "phoneNumber",
+  add_title: "titleInterviewedFor",
+  add_interviewer: "interviewerName",
+  add_date: "interviewDate"
+};
+
+const REVIEW_FIELD_PROMPTS: Record<ReviewField, string> = {
+  candidateName: "What is the candidate's name?",
+  phoneNumber: "What is the candidate's Egyptian mobile number? Use 010xxxxxxxx, 011xxxxxxxx, 012xxxxxxxx, or 015xxxxxxxx.",
+  titleInterviewedFor: "What title is the candidate being interviewed for?",
+  interviewerName: "What is the interviewer's name?",
+  interviewDate: "What is the interview date? Use DD/MM/YYYY."
+};
+
+function reviewPrompt() {
+  return "Review the candidate details below. Edit any field or confirm to save and continue to the technical assessment.";
+}
+
+export function startReviewEdit(session: WorkflowSession, field: ReviewField) {
+  return withAgent(
+    { ...session, step: REVIEW_FIELD_STEPS[field], previousStep: "add_review" },
+    REVIEW_FIELD_PROMPTS[field]
+  );
+}
+
+export function resumeDraftSession(candidateId: string) {
+  const candidate = getCandidate(candidateId);
+  if (!candidate?.isDraft) return createSession();
+  const session = createSession();
+  const step: Extract<WorkflowStep, `add_${string}`> = !candidate.candidateName
+    ? "add_name"
+    : !candidate.phoneNumber
+      ? "add_phone"
+      : !candidate.interviewDate
+        ? "add_date"
+        : !candidate.titleInterviewedFor
+          ? "add_title"
+          : !candidate.interviewerName
+            ? "add_interviewer"
+            : "add_review";
+  const field = STEP_REVIEW_FIELDS[step];
+  return {
+    ...session,
+    candidateId: candidate.id,
+    step,
+    messages: [
+      ...session.messages,
+      agent("Resuming your saved candidate draft. Let's continue where you stopped."),
+      agent(step === "add_review" ? reviewPrompt() : REVIEW_FIELD_PROMPTS[field!])
+    ]
+  };
+}
+
+export function confirmCandidateReview(session: WorkflowSession) {
+  const candidate = updateCandidate(session.candidateId, { isDraft: false, legacy: false });
+  if (!candidate) return returnMain(session, "The candidate draft could not be found.");
+  return startAssessment(session, candidate, "add", true);
+}
+
 function searchResultSummary(matches: Candidate[]) {
-  return matches
-    .map((candidate, index) => `**Result ${index + 1}**\n${basicSummary(candidate)}`)
-    .join("\n\n");
+  return `I found ${matches.length} matching candidates. Select one below to continue.`;
 }
 
 function assessmentPrompt(index: number) {
@@ -293,15 +418,30 @@ function assessmentPrompt(index: number) {
   );
 }
 
-function ratingScale() {
-  return (
-    "Please use this rating scale:\n\n" +
-    "1 → Poor (Lacks competency)\n" +
-    "2 → Basic (Minimal demonstration)\n" +
-    "3 → Developing (Moderate, needs improvement)\n" +
-    "4 → Proficient (Solid and relevant application)\n" +
-    "5 → Expert (Exceptional, insightful examples)"
-  );
+export function navigateAssessment(session: WorkflowSession, direction: "previous" | "next"): WorkflowSession {
+  const candidate = getCandidate(session.candidateId);
+  const currentIndex = session.questionIndex || 0;
+  if (!candidate) return session;
+
+  if (session.step === "assessment_comment" && typeof session.pendingRating === "number") {
+    const updatedAnswers = [...candidate.technicalAssessment];
+    updatedAnswers[currentIndex] = {
+      ...updatedAnswers[currentIndex],
+      rating: session.pendingRating,
+      comment: ""
+    };
+    updateCandidate(candidate.id, { technicalAssessment: updatedAnswers });
+  }
+
+  const nextIndex = direction === "previous" ? currentIndex - 1 : currentIndex + 1;
+  if (nextIndex < 0 || nextIndex >= QUESTIONNAIRE.length) return session;
+  return {
+    ...session,
+    step: "assessment_rating",
+    questionIndex: nextIndex,
+    pendingRating: undefined,
+    messages: [...session.messages, assessmentPrompt(nextIndex)]
+  };
 }
 
 function startAssessment(
@@ -320,7 +460,7 @@ function startAssessment(
     questionIndex: 0,
     assessmentReturn: returnTo,
     singleCriterion: false,
-    messages: [...session.messages, agent(ratingScale()), assessmentPrompt(0)]
+    messages: [...session.messages, assessmentPrompt(0)]
   };
 }
 
@@ -401,13 +541,7 @@ function selectCandidate(session: WorkflowSession, input: string, next: Workflow
     );
   }
   const selected = { ...session, candidateId: candidate.id, step: next };
-  return next === "search_status"
-    ? withAgent(
-        selected,
-        `${basicSummary(candidate)}\n\nWhat is the candidate's current interview status?`,
-        STATUS_ACTIONS
-      )
-    : updateMenu(selected, `Selected **${candidate.candidateName}**. What would you like to update?`);
+  return updateMenu(selected, `Selected **${candidate.candidateName}**. What would you like to update?`);
 }
 
 export function handleText(session: WorkflowSession, rawInput: string): WorkflowSession {
@@ -420,22 +554,27 @@ export function handleText(session: WorkflowSession, rawInput: string): Workflow
     if (candidate?.isDraft) {
       return withAgent(
         { ...session, previousStep: session.step, step: "cancel_confirm" },
-        "This will discard the unfinished candidate. Return to the main menu?",
-        YES_NO
+        "You have entered candidate data. What would you like to do?",
+        EXIT_ACTIONS
       );
     }
     return returnMain(session);
   }
 
   if (session.step === "cancel_confirm") {
-    if (isChoice(input, "1", ["yes", "confirm"])) {
+    if (isChoice(input, "exit:discard", ["discard", "yes", "confirm"])) {
       if (session.candidateId) removeCandidate(session.candidateId);
       return returnMain(session, "The unfinished candidate was discarded.");
     }
-    if (isChoice(input, "2", ["no", "back"])) {
+    if (isChoice(input, "exit:save", ["save", "draft"])) {
+      const candidate = updateCandidate(session.candidateId, { isDraft: true, legacy: false });
+      if (!candidate) return returnMain(session, "The candidate draft could not be found.");
+      return returnMain(session, "Candidate saved as a draft. You can resume it from the Drafts section.");
+    }
+    if (isChoice(input, "exit:continue", ["no", "back", "continue"])) {
       return withAgent({ ...session, step: session.previousStep || "main", previousStep: undefined }, "Continuing where you left off.");
     }
-    return withAgent(session, "Please choose Yes or No.", YES_NO);
+    return withAgent(session, "Please choose Save as draft, Discard, or Continue editing.", EXIT_ACTIONS);
   }
 
   switch (session.step) {
@@ -468,44 +607,78 @@ export function handleText(session: WorkflowSession, rawInput: string): Workflow
       return withAgent(session, "Please choose 1, 2, or 3.", MAIN_ACTIONS);
 
     case "add_name": {
-      if (input.length < 2) return withAgent(session, "Please enter a valid candidate name.");
+      if (!isValidCandidateName(input)) {
+        return withAgent(session, "Please enter at least two names separated by a space. Example: Ahmed Hassan.");
+      }
       updateCandidate(session.candidateId, { candidateName: input });
+      if (session.previousStep === "add_review") {
+        return withAgent({ ...session, step: "add_review", previousStep: undefined }, "Candidate name updated. Review the details below.");
+      }
       return withAgent({ ...session, step: "add_phone" }, "What is the candidate's Egyptian mobile number? Use 010xxxxxxxx, 011xxxxxxxx, 012xxxxxxxx, or 015xxxxxxxx.");
     }
     case "add_phone": {
       if (!isEgyptianMobile(input)) {
         return withAgent(session, invalidMobileMessage(input));
       }
+      const duplicate = findCandidates(input).find((candidate) => candidate.phoneNumber === input);
       updateCandidate(session.candidateId, { phoneNumber: input });
+      if (duplicate) {
+        return withAgent(
+          { ...session, step: "add_phone_duplicate", duplicateCandidateId: duplicate.id },
+          "A candidate already exists with this mobile number. Open the existing profile to continue.",
+          DUPLICATE_PHONE_ACTIONS
+        );
+      }
+      if (session.previousStep === "add_review") {
+        return withAgent({ ...session, step: "add_review", previousStep: undefined }, "Phone number updated. Review the details below.");
+      }
       return withAgent({ ...session, step: "add_date" }, "What is the interview date? Use DD/MM/YYYY.");
+    }
+    case "add_phone_duplicate": {
+      const existing = getCandidate(session.duplicateCandidateId);
+      if (!existing) return withAgent({ ...session, step: "add_phone" }, "The existing profile could not be found. Please enter the phone number again.");
+      if (isChoice(input, "duplicate:open", ["open existing", "open profile", "open"]) || input === "1") {
+        if (session.candidateId) removeCandidate(session.candidateId);
+        return updateMenu(
+          { ...session, candidateId: existing.id, duplicateCandidateId: undefined, step: "update_menu" },
+          `Selected **${existing.candidateName}**. What would you like to update?`
+        );
+      }
+      return withAgent(session, "Please select Open existing profile to continue.", DUPLICATE_PHONE_ACTIONS);
     }
     case "add_date": {
       const interviewDate = parseDate(input);
       if (!interviewDate) return withAgent(session, "Please enter a valid date in DD/MM/YYYY format.");
       updateCandidate(session.candidateId, { interviewDate });
+      if (session.previousStep === "add_review") {
+        return withAgent({ ...session, step: "add_review", previousStep: undefined }, "Interview date updated. Review the details below.");
+      }
       return withAgent({ ...session, step: "add_title" }, "What title is the candidate being interviewed for?");
     }
     case "add_title":
       if (input.length < 2) return withAgent(session, "Please enter a valid interviewed title.");
       updateCandidate(session.candidateId, { titleInterviewedFor: input });
+      if (session.previousStep === "add_review") {
+        return withAgent({ ...session, step: "add_review", previousStep: undefined }, "Interviewed title updated. Review the details below.");
+      }
       return withAgent({ ...session, step: "add_interviewer" }, "What is the interviewer's name?");
     case "add_interviewer":
       if (input.length < 2) return withAgent(session, "Please enter a valid interviewer name.");
-      updateCandidate(session.candidateId, { interviewerName: input });
-      return withAgent({ ...session, step: "add_feedback" }, "Please enter the interviewer's overall feedback.");
-    case "add_feedback": {
-      const candidate = updateCandidate(session.candidateId, {
-        interviewerFeedback: input,
-        interviewStatus: "scheduled"
-      });
-      if (!candidate) return returnMain(session, "The candidate draft could not be found.");
-      return startAssessment({ ...session }, candidate, "add", true);
-    }
+      updateCandidate(session.candidateId, { interviewerName: input, interviewStatus: "scheduled" });
+      if (session.previousStep === "add_review") {
+        return withAgent({ ...session, step: "add_review", previousStep: undefined }, "Interviewer name updated. Review the details below.");
+      }
+      return withAgent({ ...session, step: "add_review" }, reviewPrompt());
+    case "add_review":
+      if (isChoice(input, "1", ["confirm", "save", "continue", "yes"])) {
+        return confirmCandidateReview(session);
+      }
+      return withAgent(session, "Use the Edit buttons to change a field, or choose Confirm and save candidate to continue.");
 
     case "assessment_rating": {
       const rating = Number(input);
       if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-        return withAgent(session, "Please enter a rating from 1 to 5.", RATINGS);
+        return withAgent(session, "Please choose one of the rating buttons from Poor to Excellent.", RATINGS);
       }
       const index = session.questionIndex || 0;
       return withAgent(
@@ -571,7 +744,7 @@ export function handleText(session: WorkflowSession, rawInput: string): Workflow
             : `No candidate matched **${input}**. Try another name or phone number, or type menu.`
         );
       }
-      const next = session.step === "search_name" ? "search_status" : "update_menu";
+      const next = session.step === "search_name" ? "update_menu" : "update_menu";
       if (matches.length === 1) return selectCandidate(session, matches[0].id, next);
       return withAgent(
         { ...session, step: session.step === "search_name" ? "search_select" : "update_select" },
@@ -580,7 +753,7 @@ export function handleText(session: WorkflowSession, rawInput: string): Workflow
       );
     }
     case "search_select":
-      return selectCandidate(session, input, "search_status");
+      return selectCandidate(session, input, "update_menu");
     case "update_select":
       return selectCandidate(session, input, "update_menu");
 
@@ -647,8 +820,7 @@ export function handleText(session: WorkflowSession, rawInput: string): Workflow
           { label: "Phone number", value: "2" },
           { label: "Interview date", value: "3" },
           { label: "Interviewed title", value: "4" },
-          { label: "Interviewer name", value: "5" },
-          { label: "Interviewer feedback", value: "6" }
+          { label: "Interviewer name", value: "5" }
         ]);
       }
       if (isChoice(input, "2", ["status"])) {
@@ -668,12 +840,11 @@ export function handleText(session: WorkflowSession, rawInput: string): Workflow
         "phoneNumber",
         "interviewDate",
         "titleInterviewedFor",
-        "interviewerName",
-        "interviewerFeedback"
+        "interviewerName"
       ];
       const index = Number(input) - 1;
       const field = fields[index];
-      if (!field) return withAgent(session, "Please select a field from 1 to 6.");
+      if (!field) return withAgent(session, "Please select a field from 1 to 5.");
       return withAgent(
         { ...session, step: "update_field_value", updateField: field },
         field === "interviewDate"
