@@ -38,19 +38,19 @@ export default function LoginPage() {
       </section>
 
       {/* Right: form */}
-      <section className="flex min-h-[100dvh] items-center justify-center bg-zinc-950 px-6 py-12">
+      <section className="flex min-h-[100dvh] items-center justify-center bg-background px-6 py-12">
         <div className="w-full max-w-md">
           <div className="mb-8 flex items-center gap-3">
             <VodafoneLogo size={44} />
             <div>
-              <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-400">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-400 dark:text-zinc-500">
                 Vodafone Egypt
               </p>
-              <h2 className="text-xl font-semibold text-white">Candidate Process Filtration</h2>
+              <h2 className="text-xl font-semibold text-foreground">Candidate Process Filtration</h2>
             </div>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Welcome back</h1>
-          <p className="mt-2 mb-8 text-sm text-zinc-400">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Welcome back</h1>
+          <p className="mt-2 mb-8 text-sm text-muted-foreground">
             Sign in to continue to your recruitment workspace.
           </p>
           <LoginForm />

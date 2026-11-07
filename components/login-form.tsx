@@ -52,7 +52,7 @@ export function LoginForm() {
   }
 
   const fieldClass =
-    "h-12 rounded-xl border-zinc-800 bg-zinc-900 pl-11 text-white placeholder:text-zinc-500 focus-visible:border-red-500 focus-visible:ring-red-500/50";
+    "h-12 rounded-xl border border-zinc-300 bg-white pl-11 text-zinc-900 placeholder:text-zinc-400 focus-visible:border-red-500 focus-visible:ring-red-500/50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white dark:placeholder:text-zinc-500";
 
   return (
     <>
@@ -84,11 +84,11 @@ export function LoginForm() {
         }
       >
         <div className="flex flex-col gap-2">
-          <Label htmlFor="username" className="text-sm font-medium text-zinc-300">
+          <Label htmlFor="username" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
             NT Account
           </Label>
           <div className="relative">
-            <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+            <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
             <Input
               id="username"
               value={username}
@@ -103,12 +103,12 @@ export function LoginForm() {
 
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password" className="text-sm font-medium text-zinc-300">
+            <Label htmlFor="password" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Password
             </Label>
           </div>
           <div className="relative">
-            <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+            <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
@@ -124,7 +124,7 @@ export function LoginForm() {
               onClick={() => setShowPassword((v) => !v)}
               aria-label={showPassword ? "Hide password" : "Show password"}
               aria-pressed={showPassword}
-              className="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-zinc-500 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+              className="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-zinc-400 transition-colors hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -137,7 +137,7 @@ export function LoginForm() {
             aria-live="assertive"
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-sm text-red-400"
+            className="text-sm text-red-600 dark:text-red-400"
           >
             {error}
           </motion.p>
