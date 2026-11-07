@@ -1,0 +1,40 @@
+- generic [active] [ref=e1]:
+  - button "Switch to dark mode" [ref=e3]
+  - generic [ref=e6]:
+    - complementary [ref=e7]:
+      - generic [ref=e9]:
+        - img "Vodafone" [ref=e11]
+        - generic [ref=e14]: Vodafone Recruitment
+      - button "New chat" [ref=e16]
+      - generic [ref=e18]: Candidates
+      - generic [ref=e24]:
+        - generic [ref=e25]: Completed candidates
+        - paragraph [ref=e26]: No completed candidates yet.
+      - button "Sign out" [ref=e28]
+    - main [ref=e32]:
+      - generic [ref=e36]:
+        - generic [ref=e37]:
+          - img "Vodafone" [ref=e41]
+          - generic [ref=e44]:
+            - heading "Candidate Assessment Agent" [level=1] [ref=e45]
+            - paragraph [ref=e46]: Guided local assessment • Vodafone Egypt
+        - button "Sign out" [ref=e47]
+      - generic [ref=e58]:
+        - generic [ref=e59]:
+          - paragraph [ref=e60]:
+            - text: Welcome to
+            - strong [ref=e61]: Vodafone Candidate Assessment
+            - text: . What would you like to do today?
+          - paragraph
+          - paragraph [ref=e62]: 1. Add a new candidate
+          - paragraph [ref=e63]: 2. Search for an existing candidate
+          - paragraph [ref=e64]: 3. Update candidate details
+        - generic [ref=e65]:
+          - button "1 · Add candidate" [ref=e66]
+          - button "2 · Search" [ref=e67]
+          - button "3 · Update" [ref=e68]
+      - generic [ref=e71]:
+        - generic [ref=e73]:
+          - textbox "Type your answer…" [ref=e76]
+          - button "Send" [disabled] [ref=e77]
+        - paragraph [ref=e81]: Enter to send • Shift+Enter for a new line

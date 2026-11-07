@@ -98,7 +98,7 @@ export function VodafoneLogo({
               : undefined
           }
         >
-          Vodafone <span className="text-vodafone-red">HR</span>
+          Vodafone <span className="text-vodafone-red">Recruitment</span>
         </motion.span>
       )}
     </div>

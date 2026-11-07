@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Send, Sparkles } from "lucide-react";
+import { Loader2, Send, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
@@ -11,10 +11,11 @@ type Props = {
   onChange: (value: string) => void;
   onSubmit: () => void;
   disabled?: boolean;
+  inputDisabled?: boolean;
   placeholder?: string;
 };
 
-export function ChatComposer({ value, onChange, onSubmit, disabled, placeholder }: Props) {
+export function ChatComposer({ value, onChange, onSubmit, disabled, inputDisabled, placeholder }: Props) {
   const ref = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -25,17 +26,17 @@ export function ChatComposer({ value, onChange, onSubmit, disabled, placeholder 
   }, [value]);
 
   useEffect(() => {
-    if (!disabled) ref.current?.focus();
-  }, [disabled]);
+    if (!disabled && !inputDisabled) ref.current?.focus();
+  }, [disabled, inputDisabled]);
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      if (!disabled && value.trim()) onSubmit();
+      if (!disabled && !inputDisabled && value.trim()) onSubmit();
     }
   }
 
-  const canSend = !disabled && value.trim().length > 0;
+  const canSend = !disabled && !inputDisabled && value.trim().length > 0;
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="relative">
@@ -48,12 +49,12 @@ export function ChatComposer({ value, onChange, onSubmit, disabled, placeholder 
             value={value}
             onChange={(event) => onChange(event.target.value)}
             onKeyDown={handleKeyDown}
-            disabled={disabled}
+            disabled={disabled || inputDisabled}
             placeholder={placeholder || "Type your answer…"}
             className="flex-1 resize-none bg-transparent px-1 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none max-h-44"
           />
           <Button type="button" onClick={onSubmit} disabled={!canSend} size="icon" className="h-10 w-10 shrink-0" aria-label="Send">
-            <Send className="h-4 w-4" />
+            {disabled ? <Loader2 className="h-4 w-4 motion-safe:animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
         </div>
       </div>

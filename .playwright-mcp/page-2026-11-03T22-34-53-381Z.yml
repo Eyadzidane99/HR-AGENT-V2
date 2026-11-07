@@ -1,0 +1,35 @@
+- generic [active] [ref=e1]:
+  - button "Switch to dark mode" [ref=e3] [cursor=pointer]
+  - main [ref=e6]:
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - img "A recruitment interviewer and a job candidate in a professional interview conversation" [ref=e10]
+        - generic [ref=e12]:
+          - img "Vodafone" [ref=e15]
+          - generic [ref=e18]:
+            - paragraph [ref=e19]: Vodafone
+            - paragraph [ref=e20]: Recruitment Agent
+        - generic [ref=e21]:
+          - generic [ref=e27]:
+            - paragraph [ref=e29]: Interview Scheduled
+            - paragraph [ref=e31]: Candidate interview confirmed
+          - generic [ref=e39]:
+            - paragraph [ref=e40]: Candidate Screening
+            - paragraph [ref=e41]: Profile under review
+      - generic [ref=e45]:
+        - heading "Welcome to Vodafone Recruitment Agent" [level=1] [ref=e46]
+        - paragraph [ref=e47]: Your intelligent assistant for Recruitment processes and recruitment workflows.
+        - generic [ref=e49]:
+          - generic [ref=e50]:
+            - generic [ref=e51]: Work Email
+            - textbox "Work Email" [ref=e56]:
+              - /placeholder: Enter your work email or username
+          - generic [ref=e57]:
+            - generic [ref=e58]: Password
+            - generic [ref=e59]:
+              - textbox "Password" [ref=e63]:
+                - /placeholder: Enter your password
+              - button "Show password" [ref=e64] [cursor=pointer]
+          - button "Sign In" [ref=e68] [cursor=pointer]
+        - paragraph [ref=e69]: Secure access reserved for Vodafone technical leads in QA.
+  - alert [ref=e70]

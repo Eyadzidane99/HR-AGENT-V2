@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Vodafone HR Agent</string>
+    <string name="title_activity_main">Vodafone HR Agent</string>
+    <string name="package_name">com.vodafone.hragent</string>
+    <string name="custom_url_scheme">com.vodafone.hragent</string>
+</resources>

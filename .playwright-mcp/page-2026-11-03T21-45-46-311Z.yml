@@ -1,0 +1,29 @@
+- generic [active] [ref=e1]:
+  - button "Switch to dark mode" [ref=e3] [cursor=pointer]
+  - main [ref=e6]:
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - generic [ref=e10]:
+          - img "Vodafone" [ref=e15]
+          - generic [ref=e18]:
+            - paragraph [ref=e19]: Vodafone Egypt
+            - heading "Candidate Process Filtration" [level=1] [ref=e20]
+        - paragraph [ref=e21]: Secure workspace
+        - heading "Welcome back." [level=2] [ref=e22]
+        - paragraph [ref=e23]: Sign in to manage candidate intake and search through your talent pipeline.
+        - generic [ref=e24]:
+          - generic [ref=e25]:
+            - generic [ref=e26]: Username
+            - textbox "Username" [ref=e31]:
+              - /placeholder: Enter your Username
+          - generic [ref=e32]:
+            - generic [ref=e33]: Password
+            - textbox "Password" [ref=e38]:
+              - /placeholder: Enter your Password
+          - button "Sign in" [ref=e39] [cursor=pointer]
+          - paragraph [ref=e40]: Authorised personnel only • Vodafone Egypt
+      - generic [ref=e64]:
+        - generic [ref=e65]:
+          - paragraph [ref=e66]: Talent intelligence
+          - paragraph [ref=e67]: Connecting people, roles, and better decisions.
+        - generic [ref=e68]: Live system

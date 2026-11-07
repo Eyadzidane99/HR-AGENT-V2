@@ -1,452 +1,176 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { Check, Lock, ShieldCheck } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
+import { ArrowUpRight, Check, LockKeyhole, Sparkles } from "lucide-react";
 
-type Props = {
-  onComplete: () => void;
-};
+type Props = { onComplete: () => void };
 
-const CHIP_CONTACTS = 6;
-// Total time before we hand off to the chat route.
-const NAV_AT_MS = 3100;
-
-const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
-const EASE_OUT_QUART = [0.22, 1, 0.36, 1] as const;
+const NAVIGATION_DELAY = 3000;
+const EASE = [0.16, 1, 0.3, 1] as const;
 
 export function NetworkTransition({ onComplete }: Props) {
-  const [chipPhase, setChipPhase] = useState(0);
-  const [showRail, setShowRail] = useState(false);
-  const [docked, setDocked] = useState(false);
-  const [showSignal, setShowSignal] = useState(false);
-  const [showRings, setShowRings] = useState(false);
-  const [showConnected, setShowConnected] = useState(false);
-  const [exiting, setExiting] = useState(false);
+  const [phase, setPhase] = useState<"securing" | "syncing" | "ready">("securing");
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
-    const t: ReturnType<typeof setTimeout>[] = [];
-    t.push(setTimeout(() => setShowRail(true), 200));
-    t.push(setTimeout(() => setDocked(true), 1100));
-    for (let i = 1; i <= CHIP_CONTACTS; i++) {
-      t.push(setTimeout(() => setChipPhase(i), 1200 + i * 90));
+    if (reducedMotion) {
+      const timeout = setTimeout(onComplete, 350);
+      return () => clearTimeout(timeout);
     }
-    t.push(setTimeout(() => setShowSignal(true), 1850));
-    t.push(setTimeout(() => setShowRings(true), 2050));
-    t.push(setTimeout(() => setShowConnected(true), 2350));
-    t.push(setTimeout(() => setExiting(true), 2750));
-    t.push(setTimeout(() => onComplete(), NAV_AT_MS));
-    return () => t.forEach(clearTimeout);
-  }, [onComplete]);
+
+    const timers = [
+      setTimeout(() => setPhase("syncing"), 850),
+      setTimeout(() => setPhase("ready"), 2050),
+      setTimeout(onComplete, NAVIGATION_DELAY)
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, [onComplete, reducedMotion]);
+
+  const ready = phase === "ready";
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.35 }}
-      className="fixed inset-0 z-[200] overflow-hidden bg-white"
+      exit={{ opacity: 0, scale: 1.04, filter: "blur(10px)" }}
+      transition={{ duration: 0.45, ease: EASE }}
+      className="fixed inset-0 z-[200] overflow-hidden bg-[#f7f8fa] text-zinc-900 dark:bg-[#08090b] dark:text-white"
+      role="status"
+      aria-live="polite"
+      aria-label="Opening secure workspace"
     >
-      {/* Background glow + slow rotating ring (depth) */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(230,0,0,0.18),transparent_60%)]" />
-      <motion.div
-        className="absolute left-1/2 top-1/2 h-[140vmin] w-[140vmin] -translate-x-1/2 -translate-y-1/2 rounded-full border border-vodafone-red/10"
-        animate={{ rotate: 360 }}
-        transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-      />
+      <Atmosphere reducedMotion={Boolean(reducedMotion)} />
 
-      {/* Speed lines — parallax data streaks moving horizontally */}
-      <SpeedLines />
-
-      {/* Streaming data packets across the rail */}
-      <DataPackets active={showRail && !exiting} />
-
-      {/* Horizontal rail */}
-      <AnimatePresence>
-        {showRail ? (
-          <motion.div
-            initial={{ scaleX: 0, opacity: 0 }}
-            animate={{
-              scaleX: 1,
-              opacity: exiting ? 0 : 1
-            }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.55, ease: EASE_OUT_QUART }}
-            style={{ transformOrigin: "left center" }}
-            className="absolute left-0 right-0 top-1/2 h-px -translate-y-px bg-gradient-to-r from-transparent via-vodafone-red/60 to-transparent"
-          />
-        ) : null}
-      </AnimatePresence>
-
-      {/* Tick marks along the rail */}
-      <AnimatePresence>
-        {showRail && !exiting ? <RailTicks /> : null}
-      </AnimatePresence>
-
-      {/* Page-exit blade — sweeps left-to-right at the end */}
-      <AnimatePresence>
-        {exiting ? (
-          <motion.div
-            initial={{ x: "-110%" }}
-            animate={{ x: "110%" }}
-            transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
-            className="pointer-events-none absolute inset-y-0 left-0 w-[55vw] -skew-x-[14deg] bg-gradient-to-r from-transparent via-vodafone-red/40 to-vodafone-red/0 mix-blend-screen"
-          />
-        ) : null}
-      </AnimatePresence>
-
-      {/* Stage: SIM card travels in horizontally → docks → exits left */}
-      <motion.div
-        initial={{ x: "55vw", opacity: 0, scale: 0.85, rotate: -4 }}
-        animate={
-          exiting
-            ? { x: "-130vw", opacity: 0, scale: 0.95, rotate: -8 }
-            : docked
-            ? { x: 0, opacity: 1, scale: 1, rotate: 0 }
-            : { x: 0, opacity: 1, scale: 1, rotate: 0 }
-        }
-        transition={
-          exiting
-            ? { duration: 0.7, ease: EASE_OUT_EXPO }
-            : { duration: 1.05, ease: EASE_OUT_EXPO }
-        }
-        className="absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 items-center gap-12"
-      >
-        <SimCard chipPhase={chipPhase} />
-        <AnimatePresence>{showSignal ? <SignalBars /> : null}</AnimatePresence>
-      </motion.div>
-
-      {/* Concentric router pulse rings emanating from SIM */}
-      <AnimatePresence>
-        {showRings && !exiting ? (
-          <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            {[0, 0.45, 0.9].map((delay, i) => (
-              <motion.span
-                key={i}
-                initial={{ scale: 0.5, opacity: 0.65 }}
-                animate={{ scale: 5.2, opacity: 0 }}
-                transition={{ delay, duration: 1.8, ease: "easeOut", repeat: Infinity }}
-                className="absolute -left-24 -top-24 h-48 w-48 rounded-full border-2 border-vodafone-red"
-              />
-            ))}
+      <header className="absolute left-6 right-6 top-6 z-20 flex items-center justify-between sm:left-10 sm:right-10 sm:top-8">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-vodafone-red text-white shadow-[0_10px_30px_-10px_rgba(230,0,0,0.8)]">
+            <Sparkles className="h-4 w-4" />
           </div>
-        ) : null}
-      </AnimatePresence>
-
-      {/* Top-left handshake badge */}
-      <AnimatePresence>
-        {docked && !exiting ? (
-          <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0 }}
-            className="absolute left-8 top-8 flex items-center gap-2 rounded-full border border-vodafone-red/30 bg-white/80 px-3 py-1.5 shadow-sm backdrop-blur"
-          >
-            <Lock className="h-3 w-3 text-vodafone-red" />
-            <span className="text-[11px] tracking-[0.2em] text-zinc-600">
-              VF-EGY • SECURE HANDSHAKE
-            </span>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-
-      {/* Bottom-right session badge */}
-      <AnimatePresence>
-        {showConnected && !exiting ? (
-          <motion.div
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0 }}
-            className="absolute bottom-8 right-8 flex items-center gap-2 rounded-full border border-vodafone-red/30 bg-white/80 px-3 py-1.5 shadow-sm backdrop-blur"
-          >
-            <ShieldCheck className="h-3 w-3 text-vodafone-red" />
-            <span className="text-[11px] tracking-[0.2em] text-zinc-600">
-              SESSION ESTABLISHED
-            </span>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-
-      {/* Status line bottom-center */}
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: exiting ? 0 : 1, y: 0 }}
-        transition={{ delay: 0.35, duration: 0.4 }}
-        className="absolute bottom-[14%] left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-3 text-center"
-      >
-        <div className="flex h-6 items-center gap-2 text-sm tracking-wide text-zinc-700">
-          <AnimatePresence mode="wait">
-            {!showConnected ? (
-              <motion.span
-                key="connecting"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.25 }}
-                className="flex items-center gap-2.5"
-              >
-                <span className="h-2 w-2 rounded-full bg-vodafone-red animate-pulse-red" />
-                Establishing 5G channel…
-              </motion.span>
-            ) : (
-              <motion.span
-                key="connected"
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ type: "spring", stiffness: 260, damping: 16 }}
-                className="flex items-center gap-2.5 text-zinc-900"
-              >
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-vodafone-red shadow-[0_0_14px_rgba(230,0,0,0.85)]">
-                  <Check className="h-3 w-3 text-white" strokeWidth={3} />
-                </span>
-                Connected • 5G Ultra
-              </motion.span>
-            )}
-          </AnimatePresence>
+          <div>
+            <p className="text-xs font-semibold tracking-[0.08em]">CANDIDATE INTELLIGENCE</p>
+            <p className="mt-0.5 text-[9px] uppercase tracking-[0.24em] text-zinc-500 dark:text-white/40">Vodafone Egypt</p>
+          </div>
         </div>
-        <p className="text-[10px] uppercase tracking-[0.32em] text-zinc-500">
-          Vodafone Egypt • Secure Channel
-        </p>
-      </motion.div>
+        <div className="hidden items-center gap-2 rounded-full border border-zinc-200 bg-white/60 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-500 backdrop-blur-md dark:border-white/10 dark:bg-white/[0.04] dark:text-white/45 sm:flex">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
+          Private session
+        </div>
+      </header>
+
+      <div className="relative z-10 flex min-h-full items-center justify-center px-5 py-24">
+        <div className="relative flex w-full max-w-[720px] flex-col items-center">
+          <Portal reducedMotion={Boolean(reducedMotion)} ready={ready} />
+
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25, duration: 0.7, ease: EASE }}
+            className="mt-8 w-full max-w-[520px] text-center"
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-[0.34em] text-vodafone-red/80">{ready ? "Access granted" : "Secure workspace"}</p>
+            <h1 className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-zinc-900 dark:text-white sm:text-3xl">{ready ? "Your pipeline is ready." : phase === "syncing" ? "Connecting your intelligence layer." : "Verifying your secure session."}</h1>
+            <p className="mx-auto mt-3 max-w-[380px] text-sm leading-6 text-zinc-500 dark:text-white/45">{ready ? "Taking you to the candidate workspace now." : "A protected handoff is being prepared for your candidate data."}</p>
+          </motion.div>
+
+          <Telemetry phase={phase} />
+        </div>
+      </div>
+
+      <div className="absolute bottom-7 left-6 right-6 flex items-center justify-between text-[9px] uppercase tracking-[0.22em] text-zinc-400 dark:text-white/30 sm:left-10 sm:right-10">
+        <span>SESSION 04A7 • AES-256</span>
+        <span className="flex items-center gap-1.5 text-vodafone-red">Enter workspace <ArrowUpRight className="h-3 w-3" /></span>
+      </div>
     </motion.div>
   );
 }
 
-/* ------------------------------ subcomponents ----------------------------- */
-
-function SpeedLines() {
-  // Horizontal streaks at varied speeds & y-positions for parallax depth.
-  const lines = Array.from({ length: 14 }).map((_, i) => ({
-    top: 6 + ((i * 11) % 88),
-    width: 80 + (i % 5) * 60,
-    delay: (i % 7) * 0.18,
-    duration: 1.4 + (i % 4) * 0.4,
-    opacity: 0.18 + (i % 3) * 0.18
-  }));
+function Atmosphere({ reducedMotion }: { reducedMotion: boolean }) {
+  const particles = Array.from({ length: 16 });
   return (
-    <div className="pointer-events-none absolute inset-0">
-      {lines.map((l, i) => (
-        <motion.span
-          key={i}
-          initial={{ x: "-30vw", opacity: 0 }}
-          animate={{ x: "130vw", opacity: [0, l.opacity, 0] }}
-          transition={{
-            duration: l.duration,
-            delay: l.delay,
-            repeat: Infinity,
-            ease: "linear"
-          }}
-          style={{ top: `${l.top}%`, width: `${l.width}px` }}
-          className="absolute h-px bg-gradient-to-r from-transparent via-vodafone-red/70 to-transparent blur-[0.5px]"
-        />
-      ))}
-    </div>
+    <>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(230,0,0,0.12),transparent_23%),radial-gradient(circle_at_82%_80%,rgba(230,0,0,0.08),transparent_25%)] dark:bg-[radial-gradient(circle_at_50%_42%,rgba(230,0,0,0.22),transparent_23%),radial-gradient(circle_at_82%_80%,rgba(230,0,0,0.13),transparent_25%)]" />
+      <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(15,23,42,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(15,23,42,0.04)_1px,transparent_1px)] [background-size:64px_64px] dark:opacity-20 dark:[background-image:linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)]" />
+      {!reducedMotion ? (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          {particles.map((_, index) => (
+            <motion.span
+              key={index}
+              className="absolute h-px rounded-full bg-gradient-to-r from-transparent via-vodafone-red/50 to-transparent dark:via-vodafone-red/70"
+              style={{ top: `${8 + ((index * 19) % 82)}%`, width: `${80 + (index % 4) * 55}px` }}
+              initial={{ x: "-24vw", opacity: 0 }}
+              animate={{ x: "124vw", opacity: [0, 0.55, 0] }}
+              transition={{ duration: 3.4 + (index % 3) * 0.7, delay: index * 0.13, repeat: Infinity, ease: "linear" }}
+            />
+          ))}
+        </div>
+      ) : null}
+    </>
   );
 }
 
-function DataPackets({ active }: { active: boolean }) {
-  if (!active) return null;
-  const packets = Array.from({ length: 9 }).map((_, i) => ({
-    top: 48 + ((i * 13) % 5) - 2,
-    delay: i * 0.22,
-    duration: 1.6 + (i % 3) * 0.3
-  }));
+function Portal({ reducedMotion, ready }: { reducedMotion: boolean; ready: boolean }) {
   return (
-    <div className="pointer-events-none absolute inset-0">
-      {packets.map((p, i) => (
-        <motion.span
-          key={i}
-          initial={{ x: "-10vw", opacity: 0 }}
-          animate={{
-            x: "110vw",
-            opacity: [0, 1, 1, 0]
-          }}
-          transition={{
-            duration: p.duration,
-            delay: p.delay,
-            repeat: Infinity,
-            ease: "linear",
-            times: [0, 0.15, 0.85, 1]
-          }}
-          style={{ top: `${p.top}%` }}
-          className="absolute h-1.5 w-2 rounded-full bg-vodafone-red shadow-[0_0_10px_rgba(230,0,0,0.9)]"
-        />
-      ))}
-    </div>
-  );
-}
-
-function RailTicks() {
-  const positions = [8, 18, 28, 38, 48, 58, 68, 78, 88];
-  return (
-    <div className="pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2">
-      {positions.map((p, i) => (
-        <motion.span
-          key={i}
-          initial={{ opacity: 0, scaleY: 0 }}
-          animate={{ opacity: 0.6, scaleY: 1 }}
-          transition={{ delay: 0.15 + i * 0.04, duration: 0.3 }}
-          style={{ left: `${p}%` }}
-          className="absolute top-1/2 -translate-y-1/2 block h-2 w-px bg-vodafone-red/40"
-        />
-      ))}
-    </div>
-  );
-}
-
-function SimCard({ chipPhase }: { chipPhase: number }) {
-  const contacts: [number, number, number, number][] = [
-    [34, 50, 30, 22],
-    [76, 50, 30, 22],
-    [34, 76, 30, 22],
-    [76, 76, 30, 22],
-    [34, 102, 30, 22],
-    [76, 102, 30, 22]
-  ];
-
-  return (
-    <svg
-      width="180"
-      height="220"
-      viewBox="0 0 140 175"
-      className="drop-shadow-[0_0_45px_rgba(230,0,0,0.5)]"
-    >
-      <defs>
-        <linearGradient id="sim-body" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#1a1a1a" />
-          <stop offset="100%" stopColor="#070707" />
-        </linearGradient>
-        <linearGradient id="chip-bg" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#1d1d1d" />
-          <stop offset="100%" stopColor="#0d0d0d" />
-        </linearGradient>
-        <radialGradient id="vf-mark" cx="50%" cy="40%" r="60%">
-          <stop offset="0%" stopColor="#FF5050" />
-          <stop offset="100%" stopColor="#990000" />
-        </radialGradient>
-        <filter id="contact-glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="1.6" result="b" />
-          <feMerge>
-            <feMergeNode in="b" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
-
-      <path
-        d="M22 2 L118 2 L138 22 L138 173 L2 173 L2 22 Z"
-        fill="url(#sim-body)"
-        stroke="#E60000"
-        strokeOpacity="0.55"
-        strokeWidth="1.5"
-      />
-
-      <g opacity="0.08">
-        {Array.from({ length: 14 }).map((_, i) => (
-          <line
-            key={i}
-            x1="2"
-            y1={6 + i * 12}
-            x2="138"
-            y2={6 + i * 12}
-            stroke="#fff"
-            strokeWidth="0.4"
-          />
-        ))}
-      </g>
-
-      <circle cx="22" cy="155" r="9" fill="url(#vf-mark)" />
-      <path
-        d="M22 149 a6 6 0 0 0 -6 6 a6 6 0 0 0 4 5.6 c -0.04 -0.4 -0.06 -0.8 -0.06 -1.2 c 0 -2.4 1.9 -4.4 4.3 -4.55 q 0.1 0 0.2 0 c -1.5 -0.5 -2.5 -1.9 -2.5 -3.5 q 0 -0.15 0.02 -0.3 a 6 6 0 0 0 -0.06 0 z"
-        fill="#fff"
-      />
-
-      <rect
-        x="28"
-        y="46"
-        width="84"
-        height="86"
-        rx="6"
-        fill="url(#chip-bg)"
-        stroke="#E60000"
-        strokeOpacity="0.35"
-        strokeWidth="0.6"
-      />
-
-      {contacts.map(([x, y, w, h], i) => {
-        const lit = i < chipPhase;
-        return (
-          <motion.rect
-            key={i}
-            x={x}
-            y={y}
-            width={w}
-            height={h}
-            rx="2"
-            initial={{ fill: "#1f1f1f" }}
-            animate={{ fill: lit ? "#E60000" : "#1f1f1f" }}
-            transition={{ duration: 0.25 }}
-            filter={lit ? "url(#contact-glow)" : undefined}
-          />
-        );
-      })}
-
-      <line
-        x1="28"
-        y1="89"
-        x2="112"
-        y2="89"
-        stroke="#E60000"
-        strokeOpacity="0.25"
-        strokeWidth="0.5"
-      />
-      <line
-        x1="70"
-        y1="46"
-        x2="70"
-        y2="132"
-        stroke="#E60000"
-        strokeOpacity="0.25"
-        strokeWidth="0.5"
-      />
-
-      <circle cx="120" cy="156" r="1.6" fill="#E60000" opacity="0.7" />
-      <text x="98" y="160" fontSize="6" fill="#E60000" opacity="0.55" fontFamily="monospace">
-        VF-EGY
-      </text>
-    </svg>
-  );
-}
-
-function SignalBars() {
-  const heights = [10, 20, 32, 46, 60];
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: 24 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.4, ease: EASE_OUT_QUART }}
-      className="flex flex-col items-center gap-3"
-    >
-      <div className="flex items-end gap-1.5">
-        {heights.map((h, i) => (
-          <motion.span
-            key={i}
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: h, opacity: 1 }}
-            transition={{ delay: 0.05 + i * 0.11, duration: 0.32, ease: "easeOut" }}
-            className="block w-2.5 rounded-sm bg-vodafone-red shadow-[0_0_10px_rgba(230,0,0,0.75)]"
-          />
-        ))}
-      </div>
+    <div className="relative flex h-[260px] w-[260px] items-center justify-center sm:h-[300px] sm:w-[300px]">
       <motion.div
-        initial={{ opacity: 0, scale: 0.55 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.55, type: "spring", stiffness: 280, damping: 14 }}
-        className="rounded-md border border-vodafone-red/60 bg-vodafone-red/15 px-2 py-0.5 text-[11px] font-bold tracking-[0.18em] text-vodafone-red shadow-[0_0_18px_-4px_rgba(230,0,0,0.6)]"
+        className="absolute inset-0 rounded-full border border-vodafone-red/15 dark:border-vodafone-red/30"
+        animate={reducedMotion ? undefined : { rotate: 360 }}
+        transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+      />
+      <motion.div
+        className="absolute inset-7 rounded-full border border-dashed border-vodafone-red/20 dark:border-white/15"
+        animate={reducedMotion ? undefined : { rotate: -360 }}
+        transition={{ duration: 13, repeat: Infinity, ease: "linear" }}
+      />
+      <motion.div
+        className="absolute inset-16 rounded-full border border-vodafone-red/25 dark:border-vodafone-red/40"
+        animate={reducedMotion ? undefined : { scale: [0.92, 1.08, 0.92], opacity: [0.45, 0.9, 0.45] }}
+        transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute h-44 w-44 rounded-full bg-vodafone-red/10 blur-3xl dark:bg-vodafone-red/25"
+        animate={reducedMotion ? undefined : { scale: [0.8, 1.12, 0.8], opacity: [0.4, 0.9, 0.4] }}
+        transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+      />
+
+      <motion.div
+        className="relative flex h-28 w-28 items-center justify-center rounded-[34px] border border-vodafone-red/20 bg-white/70 shadow-[0_18px_70px_-18px_rgba(230,0,0,0.72)] backdrop-blur-xl dark:border-white/15 dark:bg-[#171014]"
+        animate={reducedMotion ? undefined : { y: [0, -6, 0] }}
+        transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
       >
-        5G
+        <div className="absolute inset-2 rounded-[28px] border border-vodafone-red/10 dark:border-white/[0.08]" />
+        <LockKeyhole className="h-10 w-10 text-vodafone-red" strokeWidth={1.35} />
+        {ready ? (
+          <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute -right-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-500/30">
+            <Check className="h-4 w-4" strokeWidth={3} />
+          </motion.span>
+        ) : null}
       </motion.div>
+
+      <motion.div
+        className="absolute left-1/2 top-1/2 h-px w-[340px] -translate-x-1/2 bg-gradient-to-r from-transparent via-vodafone-red/60 to-transparent"
+        initial={{ scaleX: 0, opacity: 0 }}
+        animate={{ scaleX: ready ? 1.3 : 1, opacity: ready ? 0.3 : 0.75 }}
+        transition={{ duration: 0.9, ease: EASE }}
+      />
+    </div>
+  );
+}
+
+function Telemetry({ phase }: { phase: "securing" | "syncing" | "ready" }) {
+  const items = [
+    ["Signal", phase === "securing" ? "AUTHENTICATING" : "STABLE"],
+    ["Latency", phase === "ready" ? "12 ms" : "— —"],
+    ["Region", "EG · CAI"]
+  ];
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7, duration: 0.5 }} className="mt-9 grid w-full max-w-[520px] grid-cols-3 divide-x divide-zinc-200/80 rounded-2xl border border-zinc-200/80 bg-white/55 px-2 py-4 backdrop-blur-xl dark:divide-white/10 dark:border-white/10 dark:bg-white/[0.04]">
+      {items.map(([label, value]) => (
+        <div key={label} className="px-3 text-center">
+          <p className="text-[9px] uppercase tracking-[0.18em] text-zinc-400 dark:text-white/30">{label}</p>
+          <p className="mt-1.5 text-[10px] font-semibold tracking-[0.12em] text-zinc-700 dark:text-white/70">{value}</p>
+        </div>
+      ))}
     </motion.div>
   );
 }
