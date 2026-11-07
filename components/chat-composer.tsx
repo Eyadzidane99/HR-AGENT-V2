@@ -13,9 +13,10 @@ type Props = {
   disabled?: boolean;
   inputDisabled?: boolean;
   placeholder?: string;
+  datePicker?: boolean;
 };
 
-export function ChatComposer({ value, onChange, onSubmit, disabled, inputDisabled, placeholder }: Props) {
+export function ChatComposer({ value, onChange, onSubmit, disabled, inputDisabled, placeholder, datePicker }: Props) {
   const ref = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -38,11 +39,27 @@ export function ChatComposer({ value, onChange, onSubmit, disabled, inputDisable
 
   const canSend = !disabled && !inputDisabled && value.trim().length > 0;
 
+  function handleDateChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const iso = event.target.value;
+    if (!iso) return;
+    const [year, month, day] = iso.split("-");
+    onChange(`${day}/${month}/${year}`);
+  }
+
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="relative">
       <div className="group relative rounded-2xl border border-vodafone-red/20 bg-white/95 backdrop-blur-md p-3 shadow-[0_12px_35px_-24px_rgba(230,0,0,0.45)] focus-within:border-vodafone-red/60 focus-within:shadow-[0_0_40px_-8px_rgba(230,0,0,0.55)] transition-all">
         <div className="flex items-end gap-2">
           <Sparkles className="ml-1 mb-3 h-4 w-4 shrink-0 text-vodafone-red/70" />
+          {datePicker ? (
+            <input
+              type="date"
+              aria-label="Choose interview date"
+              disabled={disabled || inputDisabled}
+              onChange={handleDateChange}
+              className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vodafone-red disabled:cursor-not-allowed disabled:opacity-60"
+            />
+          ) : null}
           <textarea
             ref={ref}
             rows={1}

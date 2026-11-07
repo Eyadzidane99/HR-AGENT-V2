@@ -814,6 +814,7 @@ export function ChatShell() {
               disabled={thinking}
               inputDisabled={session.step === "assessment_rating"}
               placeholder={session.step === "assessment_rating" ? "Choose a rating button above…" : session.step === "assessment_comment" ? "Type a comment for this criterion…" : undefined}
+              datePicker={session.step === "add_date" || (session.step === "update_field_value" && session.updateField === "interviewDate")}
             />
           </div>
         </div>
