@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,6 @@ import { NetworkTransition } from "@/components/network-transition";
 
 export function LoginForm() {
   const router = useRouter();
-  const usernameRef = useRef<HTMLInputElement>(null);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -25,12 +24,6 @@ export function LoginForm() {
   useEffect(() => {
     router.prefetch("/chat");
   }, [router]);
-
-  useEffect(() => {
-    if (shake > 0 && !transitioning) {
-      usernameRef.current?.focus();
-    }
-  }, [shake, transitioning]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -58,9 +51,8 @@ export function LoginForm() {
     }
   }
 
-  const shakeAnimation = prefersReducedMotion
-    ? { x: 0 }
-    : { x: shake ? [-10, 10, -8, 8, -4, 4, 0] : 0 };
+  const fieldClass =
+    "h-12 rounded-xl border-zinc-800 bg-zinc-900 pl-11 text-white placeholder:text-zinc-500 focus-visible:border-red-500 focus-visible:ring-red-500/50";
 
   return (
     <>
@@ -80,38 +72,43 @@ export function LoginForm() {
         className="flex flex-col gap-5"
         animate={
           transitioning
-            ? { x: -80, opacity: 0, filter: "blur(4px)" }
-            : { ...shakeAnimation, opacity: 1, filter: "blur(0px)" }
+            ? { x: -90, opacity: 0, filter: "blur(4px)" }
+            : prefersReducedMotion
+            ? { x: 0, opacity: 1, filter: "blur(0px)" }
+            : shake
+            ? { x: [-10, 10, -8, 8, -4, 4, 0] }
+            : { x: 0, opacity: 1, filter: "blur(0px)" }
         }
         transition={
           transitioning ? { duration: 0.45, ease: [0.22, 1, 0.36, 1] } : { duration: 0.45 }
         }
       >
         <div className="flex flex-col gap-2">
-          <Label htmlFor="username" className="text-zinc-600 dark:text-zinc-500 dark:text-[#A0A0A0]">
-            Work Email
+          <Label htmlFor="username" className="text-sm font-medium text-zinc-300">
+            NT Account
           </Label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 dark:text-[#A0A0A0]" />
+            <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
             <Input
               id="username"
-              ref={usernameRef}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Enter your NT account"
               autoComplete="username"
               required
-              className="h-[50px] rounded-[10px] border-zinc-300 bg-white pl-10 text-zinc-900 placeholder:text-zinc-400 focus-visible:border-vodafone-red focus-visible:ring-vodafone-red/60 dark:border-[#414141] dark:bg-[#171717] dark:text-white dark:placeholder:text-[#737373]"
+              className={fieldClass}
             />
           </div>
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="password" className="text-zinc-600 dark:text-zinc-500 dark:text-[#A0A0A0]">
-            Password
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password" className="text-sm font-medium text-zinc-300">
+              Password
+            </Label>
+          </div>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 dark:text-[#A0A0A0]" />
+            <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
@@ -120,14 +117,14 @@ export function LoginForm() {
               placeholder="Enter your password"
               autoComplete="current-password"
               required
-              className="h-[50px] rounded-[10px] border-zinc-300 bg-white pl-10 pr-10 text-zinc-900 placeholder:text-zinc-400 focus-visible:border-vodafone-red focus-visible:ring-vodafone-red/60 dark:border-[#414141] dark:bg-[#171717] dark:text-white dark:placeholder:text-[#737373]"
+              className={`${fieldClass} pr-11`}
             />
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
               aria-label={showPassword ? "Hide password" : "Show password"}
               aria-pressed={showPassword}
-              className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-9 w-9 items-center justify-center rounded-md text-[#A0A0A0] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vodafone-red/60"
+              className="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-zinc-500 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -140,16 +137,16 @@ export function LoginForm() {
             aria-live="assertive"
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-sm text-vodafone-accent"
+            className="text-sm text-red-400"
           >
-            {error}. Please check your credentials and try again.
+            {error}
           </motion.p>
         ) : null}
 
         <Button
           type="submit"
           disabled={loading || transitioning}
-          className="h-[50px] w-full rounded-[10px] bg-vodafone-red text-white shadow-[0_14px_32px_-12px_rgba(230,0,0,0.7)] transition-all hover:bg-vodafone-deep hover:shadow-[0_18px_36px_-12px_rgba(230,0,0,0.75)] active:scale-[0.99]"
+          className="h-12 w-full rounded-xl bg-red-600 text-white shadow-lg shadow-red-600/25 transition-all hover:bg-red-500 disabled:opacity-60"
         >
           {loading ? (
             <>
@@ -157,9 +154,13 @@ export function LoginForm() {
               Signing in…
             </>
           ) : (
-            "Sign In"
+            "Sign in"
           )}
         </Button>
+
+        <p className="text-center text-xs text-zinc-600">
+          Authorised personnel only • Vodafone Egypt
+        </p>
       </motion.form>
     </>
   );

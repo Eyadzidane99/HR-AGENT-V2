@@ -4,14 +4,15 @@ export const AUTH_COOKIE = "hr_auth";
 const VALID_USER = "Eyad_Zidane";
 const VALID_PASS = "Test123456";
 
-function safeEqual(a: string, b: string) {
+function safeEqual(a: unknown, b: string) {
+  if (typeof a !== "string") return false;
   const ab = Buffer.from(a);
   const bb = Buffer.from(b);
   if (ab.length !== bb.length) return false;
   return timingSafeEqual(ab, bb);
 }
 
-export function verifyCredentials(username: string, password: string) {
+export function verifyCredentials(username: unknown, password: unknown) {
   return safeEqual(username, VALID_USER) && safeEqual(password, VALID_PASS);
 }
 

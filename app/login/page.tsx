@@ -1,12 +1,9 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import Image from "next/image";
 
-import { AnimatedBackground } from "@/components/animated-background";
 import { LoginForm } from "@/components/login-form";
 import { VodafoneLogo } from "@/components/vodafone-logo";
-import { Card } from "@/components/ui/card";
-import { Spotlight } from "@/components/ui/spotlight";
-import { SplineScene } from "@/components/ui/splite";
 import { AUTH_COOKIE, verifyToken } from "@/lib/auth";
 
 export default function LoginPage() {
@@ -14,45 +11,51 @@ export default function LoginPage() {
   if (verifyToken(token)) redirect("/chat");
 
   return (
-    <main className="relative min-h-[100dvh] w-full flex items-center justify-center p-4 sm:p-8">
-      <AnimatedBackground />
-
-      <Card className="w-full max-w-5xl h-[600px] bg-white/95 border-vodafone-red/20 relative overflow-hidden shadow-[0_20px_70px_-30px_rgba(230,0,0,0.35)]">
-        <Spotlight className="-top-40 left-0 md:left-60 md:-top-20" fill="#E60000" />
-
-        <div className="flex h-full flex-col md:flex-row">
-          {/* Left: form */}
-          <div className="flex-1 p-8 sm:p-12 relative z-10 flex flex-col justify-center">
-            <div className="flex items-center gap-3 mb-8">
-              <VodafoneLogo size={48} />
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.2em] text-vodafone-red/80">
-                  Vodafone Egypt
-                </p>
-                <h1 className="text-2xl font-semibold text-zinc-900">Candidate Process Filtration</h1>
-              </div>
-            </div>
-
-            <h2 className="text-3xl md:text-4xl font-bold text-zinc-900 mb-2">
-              Welcome back.
-            </h2>
-            <p className="text-zinc-600 mb-8 max-w-sm">
-              Sign in to manage candidate intake and search through your talent pipeline.
-            </p>
-
-            <LoginForm />
-          </div>
-
-          {/* Right: 3D scene */}
-          <div className="hidden md:block flex-1 relative">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(230,0,0,0.18),transparent_60%)]" />
-            <SplineScene
-              scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
-              className="w-full h-full"
-            />
-          </div>
+    <main className="min-h-[100dvh] md:grid md:grid-cols-2">
+      {/* Left: recruitment imagery */}
+      <section className="relative hidden md:block overflow-hidden">
+        <Image
+          src="/images/interview.jpg"
+          alt="Recruitment interview process"
+          fill
+          priority
+          sizes="50vw"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/10" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(230,0,0,0.35),transparent_55%)]" />
+        <div className="relative z-10 flex h-full flex-col justify-end p-12 text-white">
+          <span className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-white/70">
+            Candidate Process Filtration
+          </span>
+          <h1 className="max-w-md text-4xl font-bold leading-tight tracking-tight">
+            Hire smarter. Faster.
+          </h1>
+          <p className="mt-4 max-w-md text-base text-white/80">
+            Manage candidate intake, screening, and search through your talent pipeline in one secure workspace.
+          </p>
         </div>
-      </Card>
+      </section>
+
+      {/* Right: form */}
+      <section className="flex min-h-[100dvh] items-center justify-center bg-zinc-950 px-6 py-12">
+        <div className="w-full max-w-md">
+          <div className="mb-8 flex items-center gap-3">
+            <VodafoneLogo size={44} />
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-400">
+                Vodafone Egypt
+              </p>
+              <h2 className="text-xl font-semibold text-white">Candidate Process Filtration</h2>
+            </div>
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight text-white">Welcome back</h1>
+          <p className="mt-2 mb-8 text-sm text-zinc-400">
+            Sign in to continue to your recruitment workspace.
+          </p>
+          <LoginForm />
+        </div>
+      </section>
     </main>
   );
 }
