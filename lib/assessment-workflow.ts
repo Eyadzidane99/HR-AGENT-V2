@@ -540,6 +540,14 @@ function selectCandidate(session: WorkflowSession, input: string, next: Workflow
       "That selection is no longer available. Please enter the candidate's name again."
     );
   }
+  if (next === "search_status") {
+    const selected = { ...session, candidateId: candidate.id, step: "search_status" } as WorkflowSession;
+    return withAgent(
+      selected,
+      `Selected **${candidate.candidateName}**.\n\n${basicSummary(candidate)}\n\nWhat is the interview status?`,
+      STATUS_ACTIONS
+    );
+  }
   const selected = { ...session, candidateId: candidate.id, step: next };
   return updateMenu(selected, `Selected **${candidate.candidateName}**. What would you like to update?`);
 }
@@ -744,7 +752,7 @@ export function handleText(session: WorkflowSession, rawInput: string): Workflow
             : `No candidate matched **${input}**. Try another name or phone number, or type menu.`
         );
       }
-      const next = session.step === "search_name" ? "update_menu" : "update_menu";
+      const next = session.step === "search_name" ? "search_status" : "update_menu";
       if (matches.length === 1) return selectCandidate(session, matches[0].id, next);
       return withAgent(
         { ...session, step: session.step === "search_name" ? "search_select" : "update_select" },
@@ -753,7 +761,7 @@ export function handleText(session: WorkflowSession, rawInput: string): Workflow
       );
     }
     case "search_select":
-      return selectCandidate(session, input, "update_menu");
+      return selectCandidate(session, input, "search_status");
     case "update_select":
       return selectCandidate(session, input, "update_menu");
 
